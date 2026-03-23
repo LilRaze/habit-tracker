@@ -1,0 +1,64 @@
+.targets-subtitle {
+  margin-bottom: 24px;
+  color: var(--text-secondary);
+}
+
+.targets-habit-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.targets-habit-card {
+  background: linear-gradient(135deg, #1a1a20 0%, #141418 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.targets-habit-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+
+.targets-day-squares {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.targets-day-square {
+  aspect-ratio: 1;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.targets-day-square:hover {
+  border-color: var(--text-muted);
+}
+
+.targets-day-square.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.targets-day-square.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.targets-target-count {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
