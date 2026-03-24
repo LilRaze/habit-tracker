@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { habits } from '../data/habits'
 import { getWeekStartKey, addDaysToDateStr } from '../utils/progress'
 import './Log.css'
 
-function Log({ completions, onToggleHabit }) {
+function Log({ completions, onToggleHabit, activeHabits }) {
   const [weekStart, setWeekStart] = useState(getWeekStartKey)
+  const visibleHabitNames = activeHabits ?? []
 
   const weekDates = Array.from({ length: 7 }, (_, i) =>
     addDaysToDateStr(weekStart, i)
@@ -48,11 +48,11 @@ function Log({ completions, onToggleHabit }) {
       </div>
 
       <div className="log-habit-cards">
-        {habits.map((habit) => {
-          const completedDates = completions?.[habit.name] ?? []
+        {visibleHabitNames.map((habitName) => {
+          const completedDates = completions?.[habitName] ?? []
           return (
-            <div key={habit.name} className="log-habit-card">
-              <h3 className="log-habit-name">{habit.name}</h3>
+            <div key={habitName} className="log-habit-card">
+              <h3 className="log-habit-name">{habitName}</h3>
               <div className="log-day-squares">
                 {weekDates.map((dateStr) => {
                   const isCompleted = completedDates.includes(dateStr)
@@ -61,8 +61,8 @@ function Log({ completions, onToggleHabit }) {
                       key={dateStr}
                       type="button"
                       className={`log-day-square ${isCompleted ? 'active' : ''}`}
-                      onClick={() => onToggleHabit?.(habit.name, dateStr)}
-                      aria-label={`${habit.name} ${dateStr} ${isCompleted ? 'completed' : 'not completed'}`}
+                      onClick={() => onToggleHabit?.(habitName, dateStr)}
+                      aria-label={`${habitName} ${dateStr} ${isCompleted ? 'completed' : 'not completed'}`}
                     />
                   )
                 })}

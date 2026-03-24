@@ -1,12 +1,42 @@
-.targets-subtitle {
-  margin-bottom: 24px;
-  color: var(--text-secondary);
-}
-
 .targets-habit-cards {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.targets-picker {
+  margin-top: 18px;
+}
+
+.targets-picker-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.targets-bubble {
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.targets-bubble:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.targets-bubble-icon {
+  opacity: 0.9;
 }
 
 .targets-habit-card {
@@ -18,11 +48,43 @@
 }
 
 .targets-habit-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 14px;
+  margin: 0;
   letter-spacing: -0.01em;
+}
+
+.targets-habit-icon {
+  opacity: 0.95;
+}
+
+.targets-habit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.targets-activate-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.targets-activate-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .targets-day-squares {
@@ -40,6 +102,9 @@
   cursor: pointer;
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .targets-day-square:hover {
@@ -49,6 +114,7 @@
 .targets-day-square.active {
   background: var(--accent);
   border-color: var(--accent);
+  color: #fff;
 }
 
 .targets-day-square.active:hover {
@@ -62,3 +128,32 @@
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+.targets-quantity-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.targets-quantity-input {
+  flex: 0 0 110px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.targets-quantity-input:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.targets-quantity-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+

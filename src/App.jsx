@@ -10,6 +10,8 @@ import './App.css'
 
 const STORAGE_KEY = 'habit-tracker-completions'
 const TARGET_DAYS_KEY = 'habit-tracker-target-days'
+const ACTIVE_HABITS_KEY = 'habit-tracker-active-habits'
+const QUANTITY_SETTINGS_KEY = 'habit-tracker-quantity-settings'
 
 const TABS = {
   overview: Overview,
@@ -47,7 +49,7 @@ function loadCompletions() {
 function getInitialTargetDays() {
   const data = {}
   habits.forEach((h) => {
-    data[h.name] = Array.from({ length: h.weeklyTarget }, (_, i) => i)
+    data[h.name] = Array.from({ length: h.defaultWeeklyTarget }, (_, i) => i)
   })
   return data
 }
@@ -73,10 +75,55 @@ function loadTargetDays() {
   }
 }
 
+function getInitialActiveHabits() {
+  return []
+}
+
+function loadActiveHabits() {
+  try {
+    const stored = localStorage.getItem(ACTIVE_HABITS_KEY)
+    if (!stored) return getInitialActiveHabits()
+    const parsed = JSON.parse(stored)
+    if (!Array.isArray(parsed)) return getInitialActiveHabits()
+    const validNames = new Set(habits.map((h) => h.name))
+    return [...new Set(parsed.filter((name) => typeof name === 'string' && validNames.has(name)))]
+  } catch {
+    return getInitialActiveHabits()
+  }
+}
+
+function getInitialQuantitySettings() {
+  const data = {}
+  habits.forEach((h) => {
+    data[h.name] = ''
+  })
+  return data
+}
+
+function loadQuantitySettings() {
+  try {
+    const stored = localStorage.getItem(QUANTITY_SETTINGS_KEY)
+    if (!stored) return getInitialQuantitySettings()
+    const parsed = JSON.parse(stored)
+    if (typeof parsed !== 'object' || parsed === null) return getInitialQuantitySettings()
+    const result = getInitialQuantitySettings()
+    habits.forEach((h) => {
+      const value = parsed[h.name]
+      if (typeof value === 'string') result[h.name] = value
+      if (typeof value === 'number') result[h.name] = String(value)
+    })
+    return result
+  } catch {
+    return getInitialQuantitySettings()
+  }
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('overview')
   const [completions, setCompletions] = useState(loadCompletions)
+  const [activeHabits, setActiveHabits] = useState(loadActiveHabits)
   const [targetDays, setTargetDays] = useState(loadTargetDays)
+  const [quantitySettings, setQuantitySettings] = useState(loadQuantitySettings)
   const Screen = TABS[activeTab]
 
   useEffect(() => {
@@ -87,15 +134,35 @@ function App() {
     localStorage.setItem(TARGET_DAYS_KEY, JSON.stringify(targetDays))
   }, [targetDays])
 
+  useEffect(() => {
+    localStorage.setItem(ACTIVE_HABITS_KEY, JSON.stringify(activeHabits))
+  }, [activeHabits])
+
+  useEffect(() => {
+    localStorage.setItem(QUANTITY_SETTINGS_KEY, JSON.stringify(quantitySettings))
+  }, [quantitySettings])
+
   const resetAllProgress = () => {
     if (!window.confirm('Reset all progress? Completions, target days, and week data will be cleared.')) {
       return
     }
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(TARGET_DAYS_KEY)
+    localStorage.removeItem(ACTIVE_HABITS_KEY)
+    localStorage.removeItem(QUANTITY_SETTINGS_KEY)
     localStorage.removeItem('habit-tracker-ranks')
     setCompletions({ ...initialCompletions })
+    setActiveHabits(getInitialActiveHabits())
     setTargetDays(getInitialTargetDays())
+    setQuantitySettings(getInitialQuantitySettings())
+  }
+
+  const toggleActiveHabit = (habitName) => {
+    setActiveHabits((prev) => (
+      prev.includes(habitName)
+        ? prev.filter((name) => name !== habitName)
+        : [...prev, habitName]
+    ))
   }
 
   const toggleTargetDay = (habitName, dayIndex) => {
@@ -124,14 +191,22 @@ function App() {
     })
   }
 
+  const updateQuantitySetting = (habitName, value) => {
+    setQuantitySettings((prev) => ({ ...prev, [habitName]: value }))
+  }
+
   return (
     <div className="app">
       <main className="content">
         <Screen
           completions={completions}
           onToggleHabit={toggleHabit}
+          activeHabits={activeHabits}
+          onToggleActiveHabit={toggleActiveHabit}
           targetDays={targetDays}
           onToggleTargetDay={toggleTargetDay}
+          quantitySettings={quantitySettings}
+          onUpdateQuantitySetting={updateQuantitySetting}
           onResetAllProgress={resetAllProgress}
         />
       </main>

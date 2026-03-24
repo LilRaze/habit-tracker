@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Sparkles, HeartPulse, Dumbbell, Brain, ShieldCheck } from 'lucide-react'
-import { habits } from '../data/habits'
-import { HABIT_CATEGORY_POINTS, MAIN_CATEGORIES } from '../data/categories'
-import { getWeekStartKey, getCountForWeekStart } from '../utils/progress'
+import { MAIN_CATEGORIES } from '../data/categories'
+import { deriveLongTermStats } from '../utils/stats'
 import RadarChart from '../components/RadarChart'
 import './Overview.css'
 
@@ -14,33 +13,17 @@ const CATEGORY_ICONS = {
   Discipline: ShieldCheck,
 }
 
-const SECONDARY_CATEGORIES = ['Health', 'Strength', 'Intelligence', 'Discipline']
+const SECONDARY_CATEGORIES = MAIN_CATEGORIES
 
-function getCategoryScores(completions) {
-  const weekStart = getWeekStartKey()
-  const weeklyCounts = {}
-  habits.forEach((h) => {
-    weeklyCounts[h.name] = getCountForWeekStart(completions?.[h.name] ?? [], weekStart)
-  })
-
-  const scores = {}
-  for (const category of MAIN_CATEGORIES) {
-    let current = 0
-    let max = 0
-    for (const habit of habits) {
-      const points = HABIT_CATEGORY_POINTS[habit.name]?.[category] ?? 0
-      current += weeklyCounts[habit.name] * points
-      max += habit.weeklyTarget * points
-    }
-    scores[category] =
-      max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0
+function getCategoryScores(completions, targetDays, activeHabits) {
+  const derived = deriveLongTermStats(completions ?? {}, targetDays ?? {}, activeHabits ?? [])
+  return {
+    Strength: derived.strength,
+    Health: derived.health,
+    Intelligence: derived.intelligence,
+    Discipline: derived.discipline,
+    Overall: derived.overall,
   }
-
-  const avg =
-    MAIN_CATEGORIES.reduce((sum, c) => sum + scores[c], 0) / MAIN_CATEGORIES.length
-  scores.Overall = Math.round(avg)
-
-  return scores
 }
 
 function getDay1Scores() {
@@ -50,18 +33,17 @@ function getDay1Scores() {
   return scores
 }
 
-function Overview({ completions }) {
+function Overview({ completions, targetDays, activeHabits }) {
   const [ratingView, setRatingView] = useState('current')
 
-  const currentScores = getCategoryScores(completions)
+  const currentScores = getCategoryScores(completions, targetDays, activeHabits)
   const day1Scores = getDay1Scores()
   const scores = ratingView === 'day1' ? day1Scores : currentScores
 
   return (
     <div className="screen overview">
       <header className="overview-header">
-        <h1 className="overview-title">My Rating</h1>
-        <p className="overview-subtitle">Track your progress across key life categories</p>
+        <h1 className="overview-title">Stats</h1>
         <div className="overview-pills">
           <button
             type="button"

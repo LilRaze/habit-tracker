@@ -1,22 +1,111 @@
 import { habits } from '../data/habits'
+import {
+  Activity,
+  BedDouble,
+  BookOpen,
+  Brain,
+  Briefcase,
+  Dumbbell,
+  Droplets,
+  Flower2,
+  Footprints,
+  GlassWater,
+  HandHelping,
+  Heart,
+  Home,
+  Languages,
+  Martini,
+  MessageCircleHeart,
+  PersonStanding,
+  Shirt,
+  Smile,
+  Smartphone,
+  Snowflake,
+  Sparkles,
+  StretchHorizontal,
+  Users,
+  UtensilsCrossed,
+  UserRoundPlus,
+} from 'lucide-react'
 import './Targets.css'
 
-function Targets({ targetDays, onToggleTargetDay }) {
+const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const BUBBLE_META = {
+  Gym: { label: 'Gym', Icon: Dumbbell },
+  Running: { label: 'Run', Icon: Activity },
+  'Walk goal': { label: 'Walk', Icon: Footprints },
+  Sports: { label: 'Sports', Icon: PersonStanding },
+  'No junk food': { label: 'No junk', Icon: UtensilsCrossed },
+  Sleep: { label: 'Sleep', Icon: BedDouble },
+  'No alcohol': { label: 'No alcohol', Icon: Martini },
+  'No fap': { label: 'No fap', Icon: Heart },
+  'Read book': { label: 'Reading', Icon: BookOpen },
+  'Work on skill': { label: 'Skill', Icon: Briefcase },
+  Study: { label: 'Study', Icon: Brain },
+  'Language learning': { label: 'Language', Icon: Languages },
+  'Clean room': { label: 'Clean', Icon: Home },
+  Laundry: { label: 'Laundry', Icon: Shirt },
+  'Tooth pick use': { label: 'Tooth pick', Icon: Sparkles },
+  'Dental care': { label: 'Dental', Icon: Smile },
+  Shower: { label: 'Shower', Icon: Droplets },
+  Meditation: { label: 'Meditate', Icon: Flower2 },
+  Journaling: { label: 'Journal', Icon: BookOpen },
+  'No phone': { label: 'No phone', Icon: Smartphone },
+  Reflection: { label: 'Reflect', Icon: StretchHorizontal },
+  'Gratitude practice': { label: 'Gratitude', Icon: MessageCircleHeart },
+  'No social media day': { label: 'No social', Icon: GlassWater },
+  'Cold shower': { label: 'Cold shower', Icon: Snowflake },
+  'Help someone': { label: 'Help', Icon: HandHelping },
+  'Spend time with family': { label: 'Family', Icon: Users },
+  'Meet someone new': { label: 'Meet new', Icon: UserRoundPlus },
+}
+
+function getHabitDisplayMeta(habitName) {
+  return BUBBLE_META[habitName] ?? { label: habitName, Icon: Sparkles }
+}
+
+function Targets({
+  activeHabits,
+  onToggleActiveHabit,
+  targetDays,
+  onToggleTargetDay,
+  quantitySettings,
+  onUpdateQuantitySetting,
+}) {
   const data = targetDays ?? {}
+  const activeSet = new Set(activeHabits ?? [])
+  const quantities = quantitySettings ?? {}
+  const activeHabitList = habits.filter((habit) => activeSet.has(habit.name))
+  const inactiveHabitList = habits.filter((habit) => !activeSet.has(habit.name))
 
   return (
     <div className="screen targets">
-      <h1>Targets</h1>
-      <p className="targets-subtitle">Which days you plan to do each habit</p>
+      <h1>Habits</h1>
 
       <div className="targets-habit-cards">
-        {habits.map((habit) => {
+        {activeHabitList.map((habit) => {
           const selectedDays = data[habit.name] ?? []
           const targetCount = selectedDays.length
+          const quantityValue = quantities[habit.name] ?? ''
+          const meta = getHabitDisplayMeta(habit.name)
+          const Icon = meta.Icon
 
           return (
             <div key={habit.name} className="targets-habit-card">
-              <h3 className="targets-habit-name">{habit.name}</h3>
+              <div className="targets-habit-header">
+                <h3 className="targets-habit-name">
+                  <Icon size={16} strokeWidth={2} className="targets-habit-icon" />
+                  <span>{meta.label}</span>
+                </h3>
+                <button
+                  type="button"
+                  className="targets-activate-btn"
+                  onClick={() => onToggleActiveHabit?.(habit.name)}
+                  aria-label={`Deactivate ${habit.name}`}
+                >
+                  Remove
+                </button>
+              </div>
               <div className="targets-day-squares">
                 {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
                   const isSelected = selectedDays.includes(dayIndex)
@@ -26,16 +115,54 @@ function Targets({ targetDays, onToggleTargetDay }) {
                       type="button"
                       className={`targets-day-square ${isSelected ? 'active' : ''}`}
                       onClick={() => onToggleTargetDay?.(habit.name, dayIndex)}
-                      aria-label={`${habit.name} day ${dayIndex} ${isSelected ? 'selected' : 'not selected'}`}
-                    />
+                      aria-label={`${habit.name} ${WEEKDAY_LABELS[dayIndex]} ${isSelected ? 'selected' : 'not selected'}`}
+                    >
+                      {WEEKDAY_LABELS[dayIndex]}
+                    </button>
                   )
                 })}
               </div>
-              <span className="targets-target-count">{targetCount} days</span>
+              <span className="targets-target-count">{targetCount} days per week</span>
+
+              {habit.hasQuantity ? (
+                <div className="targets-quantity-row">
+                  <input
+                    type="text"
+                    className="targets-quantity-input"
+                    value={quantityValue}
+                    onChange={(e) => onUpdateQuantitySetting?.(habit.name, e.target.value)}
+                    placeholder={habit.quantityPlaceholder ?? ''}
+                    aria-label={`${habit.name} quantity`}
+                  />
+                  <span className="targets-quantity-label">{habit.quantityLabel}</span>
+                </div>
+              ) : null}
             </div>
           )
         })}
       </div>
+
+      {inactiveHabitList.length > 0 ? (
+        <section className="targets-picker">
+          <div className="targets-picker-bubbles">
+            {inactiveHabitList.map((habit) => {
+              const meta = getHabitDisplayMeta(habit.name)
+              const Icon = meta.Icon
+              return (
+                <button
+                  key={habit.name}
+                  type="button"
+                  className="targets-bubble"
+                  onClick={() => onToggleActiveHabit?.(habit.name)}
+                >
+                  <Icon size={14} strokeWidth={2} className="targets-bubble-icon" />
+                  <span>{meta.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }

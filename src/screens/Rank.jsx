@@ -43,17 +43,19 @@ function getRankImage(rank) {
   return RANK_OVERRIDES[rank] ?? TIER_IMAGES[getTierFromRank(rank)] ?? unrankedImg
 }
 
-function Rank({ completions, targetDays }) {
+function Rank({ completions, targetDays, activeHabits }) {
   const ranks = useMemo(
-    () => deriveRanksFromCompletions(completions ?? {}, targetDays ?? {}),
-    [completions, targetDays]
+    () => deriveRanksFromCompletions(completions ?? {}, targetDays ?? {}, activeHabits ?? []),
+    [completions, targetDays, activeHabits]
   )
+  const activeSet = new Set(activeHabits ?? [])
+  const visibleHabits = habits.filter((habit) => activeSet.has(habit.name))
 
   return (
     <div className="screen rank">
       <h1>Rank</h1>
       <div className="rank-cards">
-        {habits.map((habit) => {
+        {visibleHabits.map((habit) => {
           const r = ranks[habit.name] ?? { rank: 'Unranked', lp: 0 }
           const lpPercent = Math.min(100, r.lp)
           const emblemSrc = getRankImage(r.rank)

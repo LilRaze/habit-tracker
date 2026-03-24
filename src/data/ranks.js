@@ -11,9 +11,10 @@ export const RANK_LADDER = [
 ]
 
 export function getLpChange(completed, target) {
-  if (completed >= target) return completed > target ? 25 : 20
+  if (completed > target) return 4
+  if (completed === target) return 3
   const missBy = target - completed
-  return missBy === 1 ? -15 : -25
+  return missBy === 1 ? -2 : -4
 }
 
 export function applyLpAndRanks(currentRank, currentLp, lpChange) {

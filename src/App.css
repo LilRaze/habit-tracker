@@ -49,16 +49,12 @@
 .nav-tab {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px 4px;
+  padding: 12px 4px;
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 0.65rem;
-  font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
   -webkit-tap-highlight-color: transparent;

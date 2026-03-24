@@ -22,7 +22,6 @@ function BottomNav({ activeTab, onTabChange }) {
           <span className="nav-icon">
             <tab.Icon size={22} strokeWidth={2} />
           </span>
-          <span className="nav-label">{tab.label}</span>
         </button>
       ))}
     </nav>
