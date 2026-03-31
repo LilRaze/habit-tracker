@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getWeekStartKey, addDaysToDateStr } from '../utils/progress'
 import './Log.css'
 
-function Log({ completions, onToggleHabit, activeHabits }) {
-  const [weekStart, setWeekStart] = useState(getWeekStartKey)
+function Log({ completions, onToggleHabit, activeHabits, timeOffsetTick = 0 }) {
+  const [weekStart, setWeekStart] = useState(() => getWeekStartKey())
+  const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false)
+  const [pickerWeek, setPickerWeek] = useState('')
+
+  useEffect(() => {
+    setWeekStart(getWeekStartKey())
+  }, [timeOffsetTick])
   const visibleHabitNames = activeHabits ?? []
 
   const weekDates = Array.from({ length: 7 }, (_, i) =>
@@ -23,6 +29,30 @@ function Log({ completions, onToggleHabit, activeHabits }) {
     setWeekStart((prev) => addDaysToDateStr(prev, 7))
   }
 
+  const handleWeekLabelClick = () => {
+    setIsWeekPickerOpen((prev) => !prev)
+  }
+
+  const handlePickerChange = (e) => {
+    setPickerWeek(e.target.value)
+  }
+
+  const handlePickerApply = () => {
+    if (!pickerWeek) return
+    const [yearPart, weekPart] = pickerWeek.split('-W')
+    const year = Number(yearPart)
+    const weekNum = Number(weekPart)
+    if (!Number.isFinite(year) || !Number.isFinite(weekNum) || weekNum <= 0) return
+    const simple = new Date(year, 0, 1 + (weekNum - 1) * 7)
+    const day = simple.getDay()
+    const diff = day === 0 ? 6 : day - 1
+    const monday = new Date(simple)
+    monday.setDate(simple.getDate() - diff)
+    const targetWeekStart = getWeekStartKey(monday)
+    setWeekStart(targetWeekStart)
+    setIsWeekPickerOpen(false)
+  }
+
   return (
     <div className="screen log">
       <h1>Log</h1>
@@ -36,7 +66,14 @@ function Log({ completions, onToggleHabit, activeHabits }) {
         >
           ←
         </button>
-        <span className="log-week-range">{rangeFormatted}</span>
+        <button
+          type="button"
+          className="log-week-range-btn"
+          onClick={handleWeekLabelClick}
+          aria-label="Choose week"
+        >
+          <span className="log-week-range">{rangeFormatted}</span>
+        </button>
         <button
           type="button"
           className="log-nav-btn"
@@ -46,6 +83,40 @@ function Log({ completions, onToggleHabit, activeHabits }) {
           →
         </button>
       </div>
+
+      {isWeekPickerOpen && (
+        <div className="log-week-picker-overlay" aria-modal="true" role="dialog">
+          <div className="log-week-picker">
+            <div className="log-week-picker-header">
+              <span className="log-week-picker-title">Jump to week</span>
+              <button
+                type="button"
+                className="log-week-picker-close"
+                onClick={() => setIsWeekPickerOpen(false)}
+                aria-label="Close week picker"
+              >
+                ×
+              </button>
+            </div>
+            <label className="log-week-picker-row">
+              <span>Select ISO week</span>
+              <input
+                type="week"
+                className="log-week-picker-input"
+                value={pickerWeek}
+                onChange={handlePickerChange}
+              />
+            </label>
+            <button
+              type="button"
+              className="log-week-picker-apply"
+              onClick={handlePickerApply}
+            >
+              Go to week
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="log-habit-cards">
         {visibleHabitNames.map((habitName) => {

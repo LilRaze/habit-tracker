@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Sparkles, HeartPulse, Dumbbell, Brain, ShieldCheck } from 'lucide-react'
 import { MAIN_CATEGORIES } from '../data/categories'
 import { deriveLongTermStats } from '../utils/stats'
+import { internalStatToPercent } from '../utils/statsConversion'
 import RadarChart from '../components/RadarChart'
 import './Overview.css'
 
@@ -18,11 +19,11 @@ const SECONDARY_CATEGORIES = MAIN_CATEGORIES
 function getCategoryScores(completions, targetDays, activeHabits) {
   const derived = deriveLongTermStats(completions ?? {}, targetDays ?? {}, activeHabits ?? [])
   return {
-    Strength: derived.strength,
-    Health: derived.health,
-    Intelligence: derived.intelligence,
-    Discipline: derived.discipline,
-    Overall: derived.overall,
+    Strength: internalStatToPercent(derived.strength),
+    Health: internalStatToPercent(derived.health),
+    Intelligence: internalStatToPercent(derived.intelligence),
+    Discipline: internalStatToPercent(derived.discipline),
+    Overall: internalStatToPercent(derived.overall),
   }
 }
 
@@ -33,10 +34,13 @@ function getDay1Scores() {
   return scores
 }
 
-function Overview({ completions, targetDays, activeHabits }) {
+function Overview({ completions, targetDays, activeHabits, timeOffsetTick = 0 }) {
   const [ratingView, setRatingView] = useState('current')
 
-  const currentScores = getCategoryScores(completions, targetDays, activeHabits)
+  const currentScores = useMemo(
+    () => getCategoryScores(completions, targetDays, activeHabits),
+    [completions, targetDays, activeHabits, timeOffsetTick]
+  )
   const day1Scores = getDay1Scores()
   const scores = ratingView === 'day1' ? day1Scores : currentScores
 

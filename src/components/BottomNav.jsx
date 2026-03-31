@@ -20,7 +20,7 @@ function BottomNav({ activeTab, onTabChange }) {
           aria-current={activeTab === tab.id ? 'page' : undefined}
         >
           <span className="nav-icon">
-            <tab.Icon size={22} strokeWidth={2} />
+            <tab.Icon size={26} strokeWidth={2} />
           </span>
         </button>
       ))}

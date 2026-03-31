@@ -35,3 +35,163 @@
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.5);
 }
+
+.settings-section-test {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.settings-test-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+  line-height: 1.45;
+}
+
+.settings-test-block {
+  margin-bottom: 20px;
+}
+
+.settings-test-block:last-child {
+  margin-bottom: 0;
+}
+
+.settings-test-heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.settings-test-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.settings-test-input {
+  min-width: 120px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.settings-test-btn {
+  margin-top: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.settings-test-btn:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.settings-test-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.settings-test-chip {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.settings-test-chip:hover {
+  color: var(--text-primary);
+}
+
+.settings-test-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.settings-sim-habit-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.settings-sim-habit-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.settings-sim-habit-option input {
+  accent-color: var(--accent);
+}
+
+.settings-sim-habit-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.settings-sim-habit-control {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px;
+}
+
+.settings-sim-habit-control-title {
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.settings-sim-input-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.settings-sim-mini-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.settings-sim-mini-field > span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.settings-sim-number {
+  min-width: 90px;
+  width: 90px;
+}

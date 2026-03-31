@@ -39,9 +39,10 @@
   left: 0;
   right: 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
+  min-height: 62px;
   padding-bottom: max(12px, var(--safe-bottom));
   z-index: 100;
 }
@@ -51,7 +52,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 4px;
+  padding: 14px 4px;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -76,6 +77,8 @@
 
 .nav-icon svg {
   display: block;
+  width: 26px;
+  height: 26px;
 }
 
 @media (min-width: 480px) {

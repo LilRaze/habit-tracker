@@ -30,6 +30,7 @@ function RadarChart({ scores }) {
   const points = MAIN_CATEGORIES.map((cat, i) => getPoint(scores[cat] ?? 0, i))
   const polygonPoints = points.map((p) => `${p.x},${p.y}`).join(' ')
   const totalSize = VIEW_SIZE + VIEW_PADDING * 2
+  const ticks = [25, 50, 75, 100]
 
   return (
     <div className="radar-chart">
@@ -44,12 +45,12 @@ function RadarChart({ scores }) {
             <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.18" />
           </linearGradient>
         </defs>
-        {[25, 50, 75, 100].map((pct) => (
+        {ticks.map((tick) => (
           <circle
-            key={pct}
+            key={tick}
             cx={CENTER}
             cy={CENTER}
-            r={(pct / 100) * RADIUS}
+            r={(tick / 100) * RADIUS}
             fill="none"
             stroke="var(--border)"
             strokeOpacity="0.5"

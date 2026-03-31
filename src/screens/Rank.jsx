@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { habits } from '../data/habits'
-import { deriveRanksFromCompletions } from '../utils/rankUpdate'
+import { getHelmetImageUrlFromRank } from '../utils/rankAssets'
+import { RANK_LADDER } from '../data/ranks'
+import { deriveRanksV4 } from '../utils/rankEngineV4'
 import './Rank.css'
 
 // Tier emblems (divisions within a tier share the same image)
@@ -43,38 +45,92 @@ function getRankImage(rank) {
   return RANK_OVERRIDES[rank] ?? TIER_IMAGES[getTierFromRank(rank)] ?? unrankedImg
 }
 
-function Rank({ completions, targetDays, activeHabits }) {
-  const ranks = useMemo(
-    () => deriveRanksFromCompletions(completions ?? {}, targetDays ?? {}, activeHabits ?? []),
-    [completions, targetDays, activeHabits]
+function rankToProgressValue(rank, lp) {
+  const rankIndex = RANK_LADDER.indexOf(rank)
+  const safeRankIndex = rankIndex >= 0 ? rankIndex : 0
+  const safeLp = Number.isFinite(lp) ? Math.max(0, Math.min(99, lp)) : 0
+  return safeRankIndex * 100 + safeLp
+}
+
+function progressValueToRank(progressValue) {
+  const clamped = Math.max(0, progressValue)
+  const rankIndex = Math.min(
+    RANK_LADDER.length - 1,
+    Math.floor(clamped / 100)
+  )
+  const lp = rankIndex >= RANK_LADDER.length - 1 ? 99 : clamped % 100
+  return { rank: RANK_LADDER[rankIndex], lp }
+}
+
+function Rank({ completions, targetDays, activeHabits, testRankOverride, timeOffsetTick = 0 }) {
+  const rankData = useMemo(
+    () => deriveRanksV4(completions ?? {}, targetDays ?? {}, activeHabits ?? []),
+    [completions, targetDays, activeHabits, timeOffsetTick]
   )
   const activeSet = new Set(activeHabits ?? [])
-  const visibleHabits = habits.filter((habit) => activeSet.has(habit.name))
+  const visibleHabits = rankData.habits.filter((h) => activeSet.has(h.habitName) || activeSet.has(h.habitId))
+  const overallRank = useMemo(() => {
+    return { rank: rankData.overall.rank, lp: rankData.overall.lp }
+  }, [rankData.overall.rank, rankData.overall.lp])
 
   return (
     <div className="screen rank">
       <h1>Rank</h1>
       <div className="rank-cards">
-        {visibleHabits.map((habit) => {
-          const r = ranks[habit.name] ?? { rank: 'Unranked', lp: 0 }
+        <div className="rank-card rank-card-overall">
+          <span className="rank-habit-name">Overall Rank</span>
+          <div className="rank-emblem-wrap rank-emblem-wrap--helmet">
+            <img
+              src={getHelmetImageUrlFromRank(overallRank.rank, {
+                apexDivision: testRankOverride?.apexDivision,
+              })}
+              alt=""
+              className="rank-emblem rank-emblem--helmet"
+            />
+          </div>
+          <span className="rank-tier-label">{overallRank.rank}</span>
+          <div className="rank-lp-row">
+            <span className="rank-lp-value">{overallRank.lp}</span>
+            <span className="rank-lp-label">LP</span>
+          </div>
+          <div className="rank-lp-bar">
+            <div
+              className="rank-lp-fill"
+              style={{ width: `${Math.min(100, overallRank.lp)}%` }}
+            />
+          </div>
+        </div>
+
+        {visibleHabits.map((mock) => {
+          const r = { rank: mock.rank, lp: mock.lp }
           const lpPercent = Math.min(100, r.lp)
           const emblemSrc = getRankImage(r.rank)
+          const key = mock.habitId || mock.habitName
           return (
-            <div key={habit.name} className="rank-card">
-              <span className="rank-habit-name">{habit.name}</span>
-              <div className="rank-emblem-wrap">
-                <img src={emblemSrc} alt="" className="rank-emblem" />
+            <div
+              key={key}
+              className="rank-card rank-card-habit rank-card-habit--expanded"
+            >
+              <div className="rank-card-habit-main">
+                <span className="rank-habit-name">{mock.habitName}</span>
+                <span className="rank-tier-label">{r.rank}</span>
+                <div className="rank-lp-and-bar">
+                  <div className="rank-lp-row">
+                    <span className="rank-lp-value">{r.lp}</span>
+                    <span className="rank-lp-label">LP</span>
+                  </div>
+                  <div className="rank-lp-bar">
+                    <div
+                      className="rank-lp-fill"
+                      style={{ width: `${lpPercent}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-              <span className="rank-tier-label">{r.rank}</span>
-              <div className="rank-lp-row">
-                <span className="rank-lp-value">{r.lp}</span>
-                <span className="rank-lp-label">LP</span>
-              </div>
-              <div className="rank-lp-bar">
-                <div
-                  className="rank-lp-fill"
-                  style={{ width: `${lpPercent}%` }}
-                />
+              <div className="rank-card-habit-logo">
+                <div className="rank-emblem-wrap">
+                  <img src={emblemSrc} alt="" className="rank-emblem" />
+                </div>
               </div>
             </div>
           )

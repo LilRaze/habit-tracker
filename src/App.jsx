@@ -6,12 +6,17 @@ import Targets from './screens/Targets'
 import Log from './screens/Log'
 import Rank from './screens/Rank'
 import Settings from './screens/Settings'
+import {
+  STORAGE_COMPLETIONS,
+  STORAGE_TARGET_DAYS,
+  STORAGE_ACTIVE_HABITS,
+  STORAGE_QUANTITY_SETTINGS,
+  STORAGE_RANKS_LEGACY,
+} from './utils/storageKeys'
+import { getTodayDateString, clearTimeOffsetMonths, setTimeOffsetMonths } from './utils/now'
+import { generateTestHabitData, applyStatsPreset } from './utils/testData'
+import { generateSimulationHistory } from './utils/simulation'
 import './App.css'
-
-const STORAGE_KEY = 'habit-tracker-completions'
-const TARGET_DAYS_KEY = 'habit-tracker-target-days'
-const ACTIVE_HABITS_KEY = 'habit-tracker-active-habits'
-const QUANTITY_SETTINGS_KEY = 'habit-tracker-quantity-settings'
 
 const TABS = {
   overview: Overview,
@@ -28,7 +33,7 @@ habits.forEach((h) => {
 
 function loadCompletions() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_COMPLETIONS)
     if (!stored) return initialCompletions
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return initialCompletions
@@ -56,7 +61,7 @@ function getInitialTargetDays() {
 
 function loadTargetDays() {
   try {
-    const stored = localStorage.getItem(TARGET_DAYS_KEY)
+    const stored = localStorage.getItem(STORAGE_TARGET_DAYS)
     if (!stored) return getInitialTargetDays()
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return getInitialTargetDays()
@@ -81,7 +86,7 @@ function getInitialActiveHabits() {
 
 function loadActiveHabits() {
   try {
-    const stored = localStorage.getItem(ACTIVE_HABITS_KEY)
+    const stored = localStorage.getItem(STORAGE_ACTIVE_HABITS)
     if (!stored) return getInitialActiveHabits()
     const parsed = JSON.parse(stored)
     if (!Array.isArray(parsed)) return getInitialActiveHabits()
@@ -102,7 +107,7 @@ function getInitialQuantitySettings() {
 
 function loadQuantitySettings() {
   try {
-    const stored = localStorage.getItem(QUANTITY_SETTINGS_KEY)
+    const stored = localStorage.getItem(STORAGE_QUANTITY_SETTINGS)
     if (!stored) return getInitialQuantitySettings()
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return getInitialQuantitySettings()
@@ -124,33 +129,42 @@ function App() {
   const [activeHabits, setActiveHabits] = useState(loadActiveHabits)
   const [targetDays, setTargetDays] = useState(loadTargetDays)
   const [quantitySettings, setQuantitySettings] = useState(loadQuantitySettings)
+  const [timeOffsetTick, setTimeOffsetTick] = useState(0)
   const Screen = TABS[activeTab]
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(completions))
+    localStorage.setItem(STORAGE_COMPLETIONS, JSON.stringify(completions))
   }, [completions])
 
   useEffect(() => {
-    localStorage.setItem(TARGET_DAYS_KEY, JSON.stringify(targetDays))
+    localStorage.setItem(STORAGE_TARGET_DAYS, JSON.stringify(targetDays))
   }, [targetDays])
 
   useEffect(() => {
-    localStorage.setItem(ACTIVE_HABITS_KEY, JSON.stringify(activeHabits))
+    localStorage.setItem(STORAGE_ACTIVE_HABITS, JSON.stringify(activeHabits))
   }, [activeHabits])
 
   useEffect(() => {
-    localStorage.setItem(QUANTITY_SETTINGS_KEY, JSON.stringify(quantitySettings))
+    localStorage.setItem(STORAGE_QUANTITY_SETTINGS, JSON.stringify(quantitySettings))
   }, [quantitySettings])
 
+  const bumpTimeOffset = () => setTimeOffsetTick((t) => t + 1)
+
   const resetAllProgress = () => {
-    if (!window.confirm('Reset all progress? Completions, target days, and week data will be cleared.')) {
+    if (
+      !window.confirm(
+        'Reset all progress? Completions, target days, week data, and test overrides will be cleared.'
+      )
+    ) {
       return
     }
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(TARGET_DAYS_KEY)
-    localStorage.removeItem(ACTIVE_HABITS_KEY)
-    localStorage.removeItem(QUANTITY_SETTINGS_KEY)
-    localStorage.removeItem('habit-tracker-ranks')
+    localStorage.removeItem(STORAGE_COMPLETIONS)
+    localStorage.removeItem(STORAGE_TARGET_DAYS)
+    localStorage.removeItem(STORAGE_ACTIVE_HABITS)
+    localStorage.removeItem(STORAGE_QUANTITY_SETTINGS)
+    localStorage.removeItem(STORAGE_RANKS_LEGACY)
+    clearTimeOffsetMonths()
+    bumpTimeOffset()
     setCompletions({ ...initialCompletions })
     setActiveHabits(getInitialActiveHabits())
     setTargetDays(getInitialTargetDays())
@@ -158,11 +172,11 @@ function App() {
   }
 
   const toggleActiveHabit = (habitName) => {
-    setActiveHabits((prev) => (
+    setActiveHabits((prev) =>
       prev.includes(habitName)
         ? prev.filter((name) => name !== habitName)
         : [...prev, habitName]
-    ))
+    )
   }
 
   const toggleTargetDay = (habitName, dayIndex) => {
@@ -178,7 +192,7 @@ function App() {
   }
 
   const toggleHabit = (habitName, dateStr) => {
-    const targetDate = dateStr ?? new Date().toISOString().slice(0, 10)
+    const targetDate = dateStr ?? getTodayDateString()
     setCompletions((prev) => {
       const dates = prev[habitName] ?? []
       const next = { ...prev }
@@ -195,6 +209,36 @@ function App() {
     setQuantitySettings((prev) => ({ ...prev, [habitName]: value }))
   }
 
+  const applyGeneratedTestData = (data) => {
+    setCompletions(data.completions)
+    setActiveHabits(data.activeHabits)
+    setTargetDays(data.targetDays)
+    setQuantitySettings(data.quantitySettings)
+    bumpTimeOffset()
+  }
+
+  const handleGenerateTestData = (months) => {
+    const data = generateTestHabitData(months, { mixed: true })
+    applyGeneratedTestData(data)
+  }
+
+  const handleApplyStatsPreset = (level) => {
+    const data = applyStatsPreset(level)
+    applyGeneratedTestData(data)
+  }
+
+  const handleApplySimulation = (scenario) => {
+    const data = generateSimulationHistory(scenario ?? {})
+    applyGeneratedTestData(data)
+  }
+
+  const handleApplyTestRank = () => {}
+
+  const handleApplyTimeOffset = (months) => {
+    setTimeOffsetMonths(months)
+    bumpTimeOffset()
+  }
+
   return (
     <div className="app">
       <main className="content">
@@ -208,6 +252,13 @@ function App() {
           quantitySettings={quantitySettings}
           onUpdateQuantitySetting={updateQuantitySetting}
           onResetAllProgress={resetAllProgress}
+          timeOffsetTick={timeOffsetTick}
+          testRankOverride={null}
+          onApplySimulation={handleApplySimulation}
+          onGenerateTestData={handleGenerateTestData}
+          onApplyStatsPreset={handleApplyStatsPreset}
+          onApplyTestRank={handleApplyTestRank}
+          onApplyTimeOffset={handleApplyTimeOffset}
         />
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />

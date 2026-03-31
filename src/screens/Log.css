@@ -33,6 +33,89 @@
   color: var(--text-primary);
 }
 
+.log-week-range-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.log-week-range-btn:hover .log-week-range {
+  color: var(--accent);
+}
+
+.log-week-picker {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 260px;
+}
+
+.log-week-picker-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 20;
+}
+
+.log-week-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.log-week-picker-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.log-week-picker-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.log-week-picker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.log-week-picker-input {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.log-week-picker-apply {
+  align-self: flex-end;
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
 .log-habit-cards {
   margin-top: 20px;
   display: flex;

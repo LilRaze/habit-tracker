@@ -1,3 +1,5 @@
+import { getNow } from './now'
+
 // Monday = first day of week, Sunday = last day
 const DAYS_SINCE_MONDAY = (dayOfWeek) => (dayOfWeek + 6) % 7
 
@@ -8,7 +10,7 @@ function toLocalDateString(d) {
   return `${y}-${m}-${day}`
 }
 
-export function getWeekStartKey(date = new Date()) {
+export function getWeekStartKey(date = getNow()) {
   const d = new Date(date)
   const offset = DAYS_SINCE_MONDAY(d.getDay())
   d.setDate(d.getDate() - offset)
@@ -17,12 +19,12 @@ export function getWeekStartKey(date = new Date()) {
 }
 
 export function getPreviousWeekStart() {
-  const d = new Date()
+  const d = getNow()
   d.setDate(d.getDate() - 7)
   return getWeekStartKey(d)
 }
 
-export function isDateInThisWeek(dateStr, refDate = new Date()) {
+export function isDateInThisWeek(dateStr, refDate = getNow()) {
   const date = new Date(dateStr + 'T12:00:00')
   const ref = refDate instanceof Date ? refDate : new Date(refDate + 'T12:00:00')
   const weekStart = new Date(ref)
@@ -35,7 +37,7 @@ export function isDateInThisWeek(dateStr, refDate = new Date()) {
   return date >= weekStart && date <= weekEnd
 }
 
-export function getWeeklyCount(dates, refDate = new Date()) {
+export function getWeeklyCount(dates, refDate = getNow()) {
   return (dates ?? []).filter((d) => isDateInThisWeek(d, refDate)).length
 }
 

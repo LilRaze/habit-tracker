@@ -11,10 +11,19 @@ export const RANK_LADDER = [
 ]
 
 export function getLpChange(completed, target) {
-  if (completed > target) return 4
-  if (completed === target) return 3
-  const missBy = target - completed
-  return missBy === 1 ? -2 : -4
+  const t = Number(target)
+  if (!Number.isFinite(t) || t <= 0) return 0
+
+  const c = Math.max(0, Number(completed) || 0)
+  const ratio = c / t
+
+  // Stable weekly quality table (purely weekly, no rank- or month-based bonus).
+  if (ratio >= 1.0) return 10
+  if (ratio >= 0.8) return 7
+  if (ratio >= 0.6) return 3
+  if (ratio >= 0.4) return 0
+  if (ratio >= 0.2) return -3
+  return -6
 }
 
 export function applyLpAndRanks(currentRank, currentLp, lpChange) {
