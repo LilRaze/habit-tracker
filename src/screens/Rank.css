@@ -131,6 +131,23 @@
   text-align: left;
 }
 
+.rank-next-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.rank-card-overall .rank-tier-label + .rank-next-hint {
+  margin-top: -10px;
+}
+
+.rank-card-habit .rank-next-hint--habit {
+  text-align: left;
+  margin-bottom: 6px;
+}
+
 .rank-lp-row {
   display: flex;
   align-items: baseline;

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { deriveRanksV4 } from '../utils/rankEngineV4'
-import { getRankCardPresentation } from '../utils/rankDisplayPresentation'
+import { buildRankDisplayView } from '../utils/rankDisplayPresentation'
 import './Rank.css'
 
 function Rank({
@@ -26,13 +26,14 @@ function Rank({
     return { rank: rankData.overall.rank, lp: rankData.overall.lp }
   }, [testRankOverride, rankData.overall.rank, rankData.overall.lp])
 
-  const overallPresentation = useMemo(
+  const overallView = useMemo(
     () =>
-      getRankCardPresentation(overallForDisplay.rank, {
+      buildRankDisplayView(overallForDisplay.rank, overallForDisplay.lp, {
         theme: rankVisualTheme,
+        context: 'overall',
         testRankOptions: { apexDivision: testRankOverride?.apexDivision },
       }),
-    [overallForDisplay.rank, rankVisualTheme, testRankOverride?.apexDivision]
+    [overallForDisplay.rank, overallForDisplay.lp, rankVisualTheme, testRankOverride?.apexDivision]
   )
 
   return (
@@ -41,31 +42,33 @@ function Rank({
       <div className="rank-cards">
         <div className="rank-card rank-card-overall">
           <span className="rank-habit-name">Overall Rank</span>
-          <div className={overallPresentation.emblemWrapClassName}>
+          <div className={overallView.emblemWrapClassName}>
             <img
-              src={overallPresentation.emblemSrc}
+              src={overallView.emblemSrc}
               alt=""
-              className={overallPresentation.emblemImgClassName}
+              className={overallView.emblemImgClassName}
             />
           </div>
-          <span className="rank-tier-label">{overallPresentation.displayLabel}</span>
+          <span className="rank-tier-label">{overallView.displayLabel}</span>
+          {overallView.nextRankLabel ? (
+            <span className="rank-next-hint">Next: {overallView.nextRankLabel}</span>
+          ) : null}
           <div className="rank-lp-row">
-            <span className="rank-lp-value">{overallForDisplay.lp}</span>
+            <span className="rank-lp-value">{overallView.lp}</span>
             <span className="rank-lp-label">LP</span>
           </div>
           <div className="rank-lp-bar">
             <div
               className="rank-lp-fill"
-              style={{ width: `${Math.min(100, overallForDisplay.lp)}%` }}
+              style={{ width: `${Math.min(100, overallView.lp)}%` }}
             />
           </div>
         </div>
 
         {visibleHabits.map((mock) => {
-          const r = { rank: mock.rank, lp: mock.lp }
-          const lpPercent = Math.min(100, r.lp)
-          const habitPresentation = getRankCardPresentation(r.rank, {
+          const habitView = buildRankDisplayView(mock.rank, mock.lp, {
             theme: rankVisualTheme,
+            context: 'habit',
             testRankOptions: {},
           })
           const key = mock.habitId || mock.habitName
@@ -76,26 +79,29 @@ function Rank({
             >
               <div className="rank-card-habit-main">
                 <span className="rank-habit-name">{mock.habitName}</span>
-                <span className="rank-tier-label">{habitPresentation.displayLabel}</span>
+                <span className="rank-tier-label">{habitView.displayLabel}</span>
+                {habitView.nextRankLabel ? (
+                  <span className="rank-next-hint rank-next-hint--habit">Next: {habitView.nextRankLabel}</span>
+                ) : null}
                 <div className="rank-lp-and-bar">
                   <div className="rank-lp-row">
-                    <span className="rank-lp-value">{r.lp}</span>
+                    <span className="rank-lp-value">{habitView.lp}</span>
                     <span className="rank-lp-label">LP</span>
                   </div>
                   <div className="rank-lp-bar">
                     <div
                       className="rank-lp-fill"
-                      style={{ width: `${lpPercent}%` }}
+                      style={{ width: `${Math.min(100, habitView.lp)}%` }}
                     />
                   </div>
                 </div>
               </div>
               <div className="rank-card-habit-logo">
-                <div className={habitPresentation.emblemWrapClassName}>
+                <div className={habitView.emblemWrapClassName}>
                   <img
-                    src={habitPresentation.emblemSrc}
+                    src={habitView.emblemSrc}
                     alt=""
-                    className={habitPresentation.emblemImgClassName}
+                    className={habitView.emblemImgClassName}
                   />
                 </div>
               </div>
