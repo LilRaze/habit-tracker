@@ -5,6 +5,9 @@ export const STORAGE_ACTIVE_HABITS = 'habit-tracker-active-habits'
 export const STORAGE_QUANTITY_SETTINGS = 'habit-tracker-quantity-settings'
 export const STORAGE_RANKS_LEGACY = 'habit-tracker-ranks'
 
+/** Rank screen visual theme: `lol` | `valorant` (display-only; ladder unchanged). */
+export const STORAGE_RANK_VISUAL_THEME = 'habit-tracker-rank-visual-theme'
+
 /** Dev/testing (temporary) */
 export const STORAGE_TEST_RANK_OVERRIDE = 'habit-tracker-test-rank-override'
 export const STORAGE_TEST_TIME_OFFSET_MONTHS = 'habit-tracker-test-time-offset-months'

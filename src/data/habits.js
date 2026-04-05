@@ -56,14 +56,6 @@ export const habits = [
     quantityPlaceholder: null,
   },
   {
-    id: 'no-fap',
-    name: 'No fap',
-    defaultWeeklyTarget: 7,
-    hasQuantity: false,
-    quantityLabel: null,
-    quantityPlaceholder: null,
-  },
-  {
     id: 'read-book',
     name: 'Read book',
     defaultWeeklyTarget: 5,

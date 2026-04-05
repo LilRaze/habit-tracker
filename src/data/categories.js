@@ -6,7 +6,6 @@ export const HABIT_CATEGORY_POINTS = {
   'No junk food': { Health: 9, Discipline: 8 },
   Sleep: { Health: 10, Discipline: 6, Intelligence: 4 },
   'No alcohol': { Health: 9, Discipline: 8 },
-  'No fap': { Discipline: 8, Health: 4 },
   'Read book': { Intelligence: 10, Discipline: 6 },
   'Work on skill': { Intelligence: 8, Discipline: 8 },
   Study: { Intelligence: 10, Discipline: 7 },

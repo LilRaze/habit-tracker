@@ -2,6 +2,12 @@ import { habits } from '../data/habits'
 import { getWeekStartKey, getCountForWeekStart, addDaysToDateStr } from './progress'
 import { RANK_LADDER } from '../data/ranks'
 
+/**
+ * Rank engine V4 — additive model: totalProgress = sum of interpolated weekly LP from a
+ * matrix-calibrated surface (smooth per consistency row). Each Mon–Sun week contributes once;
+ * the current week is included (ratio = completions / weeklyTarget, clamped).
+ */
+
 // ---- Matrix definition (same as V3, but used for weekly gains) ----
 
 const MATRIX_WEEKS = [4, 12, 48, 96, 144, 192, 240]
@@ -171,7 +177,7 @@ const ROW_WEEKLY_GAINS = (() => {
   return result
 })()
 
-function interpolateWeeklyGain(consistency, weekNumber) {
+export function interpolateWeeklyGain(consistency, weekNumber) {
   const c = clamp01(consistency)
   const w = Math.max(1, Math.min(weekNumber, 240))
 
@@ -195,7 +201,7 @@ function interpolateWeeklyGain(consistency, weekNumber) {
   return lerp(gLo, gHi, tC)
 }
 
-function progressToRank(progress) {
+export function progressToRank(progress) {
   const p = Math.max(0, progress)
   const index = Math.min(RANK_LADDER.length - 1, Math.floor(p / 100))
   const rank = RANK_LADDER[index]
@@ -210,13 +216,13 @@ function computeWeeklyRatios(dates, habit, targetDaysForHabit) {
   }
 
   const currentWeekStart = getWeekStartKey()
-  const lastFullWeekStart = addDaysToDateStr(currentWeekStart, -7)
 
   const firstDateStr = history[0]
   let weekStart = getWeekStartKey(new Date(firstDateStr + 'T12:00:00'))
 
   const ratios = []
-  while (weekStart <= lastFullWeekStart) {
+  // Include the current Mon–Sun week (partial progress counts toward ratio).
+  while (weekStart <= currentWeekStart) {
     const completed = getCountForWeekStart(history, weekStart)
     const selectedCount = Array.isArray(targetDaysForHabit)
       ? targetDaysForHabit.length

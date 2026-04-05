@@ -8,6 +8,11 @@
     "build": "node scripts/generate-pwa-icons.js && vite build",
     "preview": "vite preview",
     "generate-icons": "node scripts/generate-pwa-icons.js",
+    "simulate:stats-rank": "npx --yes esbuild scripts/statsRankSimulation.mjs --bundle --platform=node --format=esm --outfile=scripts/statsRankSimulation.bundle.mjs && node scripts/statsRankSimulation.bundle.mjs",
+    "simulate:stats-rank:full": "npx --yes esbuild scripts/statsRankSimulation.mjs --bundle --platform=node --format=esm --outfile=scripts/statsRankSimulation.bundle.mjs && node scripts/statsRankSimulation.bundle.mjs --full",
+    "simulate:stats-rank:smoke": "npx --yes esbuild scripts/statsRankSimulation.mjs --bundle --platform=node --format=esm --outfile=scripts/statsRankSimulation.bundle.mjs && node scripts/statsRankSimulation.bundle.mjs --smoke",
+    "simulate:stats-rank:verify": "npx --yes esbuild scripts/statsRankSimulation/verifyRankSim.mjs --bundle --platform=node --format=esm --outfile=scripts/verifyRankSim.bundle.mjs && node scripts/verifyRankSim.bundle.mjs",
+    "simulate:stats-curve-calibration": "npx --yes esbuild scripts/statsCurveCalibration.mjs --bundle --platform=node --format=esm --outfile=scripts/statsCurveCalibration.bundle.mjs && node scripts/statsCurveCalibration.bundle.mjs",
     "postinstall": "node scripts/generate-pwa-icons.js"
   },
   "devDependencies": {
@@ -17,6 +22,7 @@
     "vite-plugin-pwa": "^1.2.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "@vitejs/plugin-react": "^6.0.1",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",

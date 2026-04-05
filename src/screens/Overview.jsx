@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Sparkles, HeartPulse, Dumbbell, Brain, ShieldCheck } from 'lucide-react'
+import { Sparkles, HeartPulse, Dumbbell, Brain, ShieldCheck, Info } from 'lucide-react'
 import { MAIN_CATEGORIES } from '../data/categories'
 import { deriveLongTermStats } from '../utils/stats'
 import { internalStatToPercent } from '../utils/statsConversion'
+import { getStatsTrackingMeta } from '../utils/statsMeta'
 import RadarChart from '../components/RadarChart'
 import './Overview.css'
 
@@ -34,8 +35,19 @@ function getDay1Scores() {
   return scores
 }
 
+function formatUnmappedNames(names) {
+  if (names.length === 0) return ''
+  if (names.length <= 3) return names.join(', ')
+  return `${names.slice(0, 2).join(', ')}, +${names.length - 2}`
+}
+
 function Overview({ completions, targetDays, activeHabits, timeOffsetTick = 0 }) {
   const [ratingView, setRatingView] = useState('current')
+
+  const tracking = useMemo(
+    () => getStatsTrackingMeta(activeHabits),
+    [activeHabits, timeOffsetTick]
+  )
 
   const currentScores = useMemo(
     () => getCategoryScores(completions, targetDays, activeHabits),
@@ -44,26 +56,38 @@ function Overview({ completions, targetDays, activeHabits, timeOffsetTick = 0 })
   const day1Scores = getDay1Scores()
   const scores = ratingView === 'day1' ? day1Scores : currentScores
 
+  const showUnmappedNotice = tracking.unmappedCount > 0
+
   return (
     <div className="screen overview">
       <header className="overview-header">
-        <h1 className="overview-title">Stats</h1>
-        <div className="overview-pills">
-          <button
-            type="button"
-            className={`overview-pill ${ratingView === 'current' ? 'active' : ''}`}
-            onClick={() => setRatingView('current')}
-          >
-            Current rating
-          </button>
-          <button
-            type="button"
-            className={`overview-pill ${ratingView === 'day1' ? 'active' : ''}`}
-            onClick={() => setRatingView('day1')}
-          >
-            Day 1 rating
-          </button>
+        <div className="overview-header-top">
+          <h1 className="overview-title">Stats</h1>
+          <div className="overview-pills">
+            <button
+              type="button"
+              className={`overview-pill ${ratingView === 'current' ? 'active' : ''}`}
+              onClick={() => setRatingView('current')}
+            >
+              Current
+            </button>
+            <button
+              type="button"
+              className={`overview-pill ${ratingView === 'day1' ? 'active' : ''}`}
+              onClick={() => setRatingView('day1')}
+            >
+              Day 1
+            </button>
+          </div>
         </div>
+        {showUnmappedNotice && (
+          <div className="overview-notice" role="status">
+            <Info size={16} strokeWidth={2} className="overview-notice-icon" aria-hidden />
+            <span>
+              {tracking.unmappedCount} unmapped · {formatUnmappedNames(tracking.unmappedNames)}
+            </span>
+          </div>
+        )}
       </header>
 
       <section className="overview-cards">
@@ -71,7 +95,7 @@ function Overview({ completions, targetDays, activeHabits, timeOffsetTick = 0 })
           <div className="overview-card-header">
             <div className="overview-card-title">
               <span className="overview-card-icon">
-                <Sparkles size={20} strokeWidth={2} />
+                <Sparkles size={22} strokeWidth={2} />
               </span>
               <span className="overview-card-name">Overall</span>
             </div>

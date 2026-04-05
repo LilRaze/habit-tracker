@@ -18,9 +18,6 @@ export const HABIT_TO_STAT_KEYS = {
   Shower: ['health', 'discipline'],
   'Dental care': ['health', 'discipline'],
 
-  // Discipline only
-  'No fap': ['discipline'],
-
   // Discipline + Health
   'Cold shower': ['discipline', 'health'],
   'Clean room': ['discipline', 'health'],

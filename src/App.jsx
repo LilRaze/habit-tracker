@@ -1,21 +1,35 @@
-import { useState, useEffect } from 'react'
-import { habits } from './data/habits'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import BottomNav from './components/BottomNav'
+import AuthBar from './components/AuthBar'
+import CloudConflictModal from './components/CloudConflictModal'
 import Overview from './screens/Overview'
 import Targets from './screens/Targets'
 import Log from './screens/Log'
 import Rank from './screens/Rank'
 import Settings from './screens/Settings'
+import { useAuth } from './contexts/AuthContext'
+import { useCloudPersistence } from './hooks/useCloudPersistence'
 import {
   STORAGE_COMPLETIONS,
   STORAGE_TARGET_DAYS,
   STORAGE_ACTIVE_HABITS,
   STORAGE_QUANTITY_SETTINGS,
   STORAGE_RANKS_LEGACY,
+  STORAGE_TEST_RANK_OVERRIDE,
 } from './utils/storageKeys'
-import { getTodayDateString, clearTimeOffsetMonths, setTimeOffsetMonths } from './utils/now'
+import { loadCompletions, loadTargetDays, loadActiveHabits, loadQuantitySettings } from './utils/persistedState'
+import {
+  normalizeSnapshot,
+  loadLocalSnapshot,
+  getEmptySnapshot,
+  persistSnapshotToLocal,
+} from './utils/appStateSnapshot'
+import { loadRankVisualTheme, saveRankVisualTheme } from './utils/rankVisualTheme'
+import { loadTestRankOverride, saveTestRankOverride, clearTestRankOverride } from './utils/testRankOverride'
+import { getTodayDateString, clearTimeOffsetMonths, setTimeOffsetMonths, getTimeOffsetMonths } from './utils/now'
 import { generateTestHabitData, applyStatsPreset } from './utils/testData'
 import { generateSimulationHistory } from './utils/simulation'
+import { upsertHabitUserState } from './services/cloudState'
 import './App.css'
 
 const TABS = {
@@ -26,111 +40,57 @@ const TABS = {
   settings: Settings,
 }
 
-const initialCompletions = {}
-habits.forEach((h) => {
-  initialCompletions[h.name] = []
-})
-
-function loadCompletions() {
-  try {
-    const stored = localStorage.getItem(STORAGE_COMPLETIONS)
-    if (!stored) return initialCompletions
-    const parsed = JSON.parse(stored)
-    if (typeof parsed !== 'object' || parsed === null) return initialCompletions
-    const result = { ...initialCompletions }
-    habits.forEach((h) => {
-      if (Array.isArray(parsed[h.name])) {
-        result[h.name] = parsed[h.name].filter(
-          (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)
-        )
-      }
-    })
-    return result
-  } catch {
-    return initialCompletions
-  }
-}
-
-function getInitialTargetDays() {
-  const data = {}
-  habits.forEach((h) => {
-    data[h.name] = Array.from({ length: h.defaultWeeklyTarget }, (_, i) => i)
-  })
-  return data
-}
-
-function loadTargetDays() {
-  try {
-    const stored = localStorage.getItem(STORAGE_TARGET_DAYS)
-    if (!stored) return getInitialTargetDays()
-    const parsed = JSON.parse(stored)
-    if (typeof parsed !== 'object' || parsed === null) return getInitialTargetDays()
-    const result = getInitialTargetDays()
-    habits.forEach((h) => {
-      if (Array.isArray(parsed[h.name])) {
-        const valid = parsed[h.name].filter(
-          (d) => typeof d === 'number' && d >= 0 && d <= 6 && Number.isInteger(d)
-        )
-        result[h.name] = [...new Set(valid)].sort((a, b) => a - b)
-      }
-    })
-    return result
-  } catch {
-    return getInitialTargetDays()
-  }
-}
-
-function getInitialActiveHabits() {
-  return []
-}
-
-function loadActiveHabits() {
-  try {
-    const stored = localStorage.getItem(STORAGE_ACTIVE_HABITS)
-    if (!stored) return getInitialActiveHabits()
-    const parsed = JSON.parse(stored)
-    if (!Array.isArray(parsed)) return getInitialActiveHabits()
-    const validNames = new Set(habits.map((h) => h.name))
-    return [...new Set(parsed.filter((name) => typeof name === 'string' && validNames.has(name)))]
-  } catch {
-    return getInitialActiveHabits()
-  }
-}
-
-function getInitialQuantitySettings() {
-  const data = {}
-  habits.forEach((h) => {
-    data[h.name] = ''
-  })
-  return data
-}
-
-function loadQuantitySettings() {
-  try {
-    const stored = localStorage.getItem(STORAGE_QUANTITY_SETTINGS)
-    if (!stored) return getInitialQuantitySettings()
-    const parsed = JSON.parse(stored)
-    if (typeof parsed !== 'object' || parsed === null) return getInitialQuantitySettings()
-    const result = getInitialQuantitySettings()
-    habits.forEach((h) => {
-      const value = parsed[h.name]
-      if (typeof value === 'string') result[h.name] = value
-      if (typeof value === 'number') result[h.name] = String(value)
-    })
-    return result
-  } catch {
-    return getInitialQuantitySettings()
-  }
-}
-
 function App() {
+  const { user, loading: authLoading } = useAuth()
+
   const [activeTab, setActiveTab] = useState('overview')
   const [completions, setCompletions] = useState(loadCompletions)
   const [activeHabits, setActiveHabits] = useState(loadActiveHabits)
   const [targetDays, setTargetDays] = useState(loadTargetDays)
   const [quantitySettings, setQuantitySettings] = useState(loadQuantitySettings)
   const [timeOffsetTick, setTimeOffsetTick] = useState(0)
+  const [rankVisualTheme, setRankVisualTheme] = useState(loadRankVisualTheme)
+  const [testRankOverride, setTestRankOverride] = useState(() => loadTestRankOverride())
   const Screen = TABS[activeTab]
+
+  const bumpTimeOffset = useCallback(() => setTimeOffsetTick((t) => t + 1), [])
+
+  const applySnapshot = useCallback((snap) => {
+    const n = normalizeSnapshot(snap)
+    setCompletions(n.completions)
+    setTargetDays(n.targetDays)
+    setActiveHabits(n.activeHabits)
+    setQuantitySettings(n.quantitySettings)
+    setRankVisualTheme(n.rankVisualTheme)
+    setTestRankOverride(n.testRankOverride)
+    persistSnapshotToLocal(n)
+    bumpTimeOffset()
+  }, [bumpTimeOffset])
+
+  const snapshotForSync = useMemo(
+    () => ({
+      completions,
+      targetDays,
+      activeHabits,
+      quantitySettings,
+      rankVisualTheme,
+      testRankOverride,
+      timeOffsetMonths: getTimeOffsetMonths(),
+    }),
+    [completions, targetDays, activeHabits, quantitySettings, rankVisualTheme, testRankOverride, timeOffsetTick]
+  )
+
+  const { cloudStatus, conflict, lastError, resolveUseCloud, resolveUseDevice } = useCloudPersistence({
+    user,
+    authLoading,
+    snapshotForSync,
+    applySnapshot,
+    bumpTimeOffset,
+  })
+
+  const handleAfterSignOut = useCallback(() => {
+    applySnapshot(loadLocalSnapshot())
+  }, [applySnapshot])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_COMPLETIONS, JSON.stringify(completions))
@@ -148,9 +108,11 @@ function App() {
     localStorage.setItem(STORAGE_QUANTITY_SETTINGS, JSON.stringify(quantitySettings))
   }, [quantitySettings])
 
-  const bumpTimeOffset = () => setTimeOffsetTick((t) => t + 1)
+  useEffect(() => {
+    saveRankVisualTheme(rankVisualTheme)
+  }, [rankVisualTheme])
 
-  const resetAllProgress = () => {
+  const resetAllProgress = async () => {
     if (
       !window.confirm(
         'Reset all progress? Completions, target days, week data, and test overrides will be cleared.'
@@ -163,12 +125,20 @@ function App() {
     localStorage.removeItem(STORAGE_ACTIVE_HABITS)
     localStorage.removeItem(STORAGE_QUANTITY_SETTINGS)
     localStorage.removeItem(STORAGE_RANKS_LEGACY)
+    localStorage.removeItem(STORAGE_TEST_RANK_OVERRIDE)
     clearTimeOffsetMonths()
+    clearTestRankOverride()
     bumpTimeOffset()
-    setCompletions({ ...initialCompletions })
-    setActiveHabits(getInitialActiveHabits())
-    setTargetDays(getInitialTargetDays())
-    setQuantitySettings(getInitialQuantitySettings())
+    const empty = getEmptySnapshot()
+    setCompletions(empty.completions)
+    setActiveHabits(empty.activeHabits)
+    setTargetDays(empty.targetDays)
+    setQuantitySettings(empty.quantitySettings)
+    setRankVisualTheme('lol')
+    setTestRankOverride(null)
+    if (user) {
+      await upsertHabitUserState(user.id, empty)
+    }
   }
 
   const toggleActiveHabit = (habitName) => {
@@ -232,7 +202,10 @@ function App() {
     applyGeneratedTestData(data)
   }
 
-  const handleApplyTestRank = () => {}
+  const handleApplyTestRank = (payload) => {
+    saveTestRankOverride(payload ?? null)
+    setTestRankOverride(loadTestRankOverride())
+  }
 
   const handleApplyTimeOffset = (months) => {
     setTimeOffsetMonths(months)
@@ -241,6 +214,17 @@ function App() {
 
   return (
     <div className="app">
+      <AuthBar cloudStatus={cloudStatus} lastCloudError={lastError} onAfterSignOut={handleAfterSignOut} />
+      {conflict ? (
+        <CloudConflictModal
+          onUseCloud={() => {
+            resolveUseCloud()
+          }}
+          onUseDevice={() => {
+            resolveUseDevice()
+          }}
+        />
+      ) : null}
       <main className="content">
         <Screen
           completions={completions}
@@ -253,7 +237,9 @@ function App() {
           onUpdateQuantitySetting={updateQuantitySetting}
           onResetAllProgress={resetAllProgress}
           timeOffsetTick={timeOffsetTick}
-          testRankOverride={null}
+          rankVisualTheme={rankVisualTheme}
+          onRankVisualThemeChange={setRankVisualTheme}
+          testRankOverride={testRankOverride}
           onApplySimulation={handleApplySimulation}
           onGenerateTestData={handleGenerateTestData}
           onApplyStatsPreset={handleApplyStatsPreset}

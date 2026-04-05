@@ -8,7 +8,8 @@ const ROMAN_TO_DIVISION = {
   I: 1,
 }
 
-const TIER_WITH_DIVISIONS = new Set([
+/** Tiers that use Roman divisions in rank strings (for parsing). */
+const TIER_WITH_ROMAN_DIVISIONS = new Set([
   'Iron',
   'Bronze',
   'Silver',
@@ -18,9 +19,18 @@ const TIER_WITH_DIVISIONS = new Set([
   'Diamond',
 ])
 
-function extForTiered(tier) {
-  return tier === 'Emerald' ? '.png' : '.webp'
-}
+/**
+ * Tiers that have helmet image files under `public/helmet ranks/`.
+ * Emerald uses the flat tier asset from `src/assets/ranks/emerald.webp` in Rank.jsx instead.
+ */
+const TIER_WITH_HELMET_FILES = new Set([
+  'Iron',
+  'Bronze',
+  'Silver',
+  'Gold',
+  'Platinum',
+  'Diamond',
+])
 
 /**
  * @param {string} rankTier
@@ -46,9 +56,9 @@ export function getHelmetImagePath(rankTier, division) {
     return encodeHelmetPath(file)
   }
 
-  if (TIER_WITH_DIVISIONS.has(rankTier)) {
+  if (TIER_WITH_HELMET_FILES.has(rankTier)) {
     const d = normalizeTieredDivision(division)
-    const ext = extForTiered(rankTier)
+    const ext = '.webp'
     return encodeHelmetPath(`${HELMET_BASE}/${rankTier}${d}${ext}`)
   }
 
@@ -98,7 +108,7 @@ export function parseRankForHelmet(rank, options = {}) {
   const roman = parts[1]
   const division = ROMAN_TO_DIVISION[roman]
 
-  if (division === undefined || !TIER_WITH_DIVISIONS.has(tier)) {
+  if (division === undefined || !TIER_WITH_ROMAN_DIVISIONS.has(tier)) {
     return { tier: 'Unranked', division: undefined }
   }
 

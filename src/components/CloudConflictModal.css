@@ -1,0 +1,102 @@
+.cloud-conflict-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.cloud-conflict-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  border-radius: 16px;
+  background: linear-gradient(155deg, #1e1e26 0%, #16161c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.cloud-conflict-title {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.cloud-conflict-lead {
+  margin: 0 0 18px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.cloud-conflict-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cloud-conflict-btn {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  transition: background 0.2s, border-color 0.2s, filter 0.2s;
+}
+
+.cloud-conflict-btn-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cloud-conflict-btn-detail {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+.cloud-conflict-btn--primary {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.cloud-conflict-btn--primary .cloud-conflict-btn-detail {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.cloud-conflict-btn--primary:hover {
+  filter: brightness(1.06);
+}
+
+.cloud-conflict-btn--danger {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.cloud-conflict-btn--danger .cloud-conflict-btn-label {
+  color: #fecaca;
+}
+
+.cloud-conflict-btn--danger .cloud-conflict-btn-detail {
+  color: rgba(254, 202, 202, 0.85);
+}
+
+.cloud-conflict-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.5);
+}

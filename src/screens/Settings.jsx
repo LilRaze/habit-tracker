@@ -140,7 +140,6 @@ const SIM_PRESET_SCENARIOS = [
       'No alcohol',
       'Shower',
       'Dental care',
-      'No fap',
       'Cold shower',
       'Clean room',
       'Laundry',
@@ -166,7 +165,6 @@ const SIM_PRESET_SCENARIOS = [
       'No alcohol': 5,
       Shower: 5,
       'Dental care': 5,
-      'No fap': 4,
       'Cold shower': 4,
       'Clean room': 3,
       Laundry: 3,
@@ -192,7 +190,6 @@ const SIM_PRESET_SCENARIOS = [
       'No alcohol': 5,
       Shower: 5,
       'Dental care': 4,
-      'No fap': 4,
       'Cold shower': 4,
       'Clean room': 3,
       Laundry: 3,
@@ -228,7 +225,13 @@ const SIM_PRESET_SCENARIOS = [
   },
 ]
 
-function Settings({ onResetAllProgress, onApplySimulation, onApplyTestRank }) {
+function Settings({
+  onResetAllProgress,
+  onApplySimulation,
+  onApplyTestRank,
+  rankVisualTheme = 'lol',
+  onRankVisualThemeChange,
+}) {
   const [scenarioPassword, setScenarioPassword] = useState('')
   const [scenarioUnlocked, setScenarioUnlocked] = useState(false)
   const [scenarioError, setScenarioError] = useState('')
@@ -325,6 +328,24 @@ function Settings({ onResetAllProgress, onApplySimulation, onApplyTestRank }) {
     <div className="screen settings">
       <h1>Settings</h1>
       <p className="settings-subtitle">Configure your app preferences.</p>
+
+      <section className="settings-section">
+        <h2 className="settings-section-title">Rank display</h2>
+        <p className="settings-test-hint">Visual theme only — rank progression and LP are unchanged.</p>
+        <label className="settings-test-row">
+          <span>Rank visuals</span>
+          <select
+            className="settings-test-input"
+            value={rankVisualTheme}
+            onChange={(e) =>
+              onRankVisualThemeChange?.(e.target.value === 'valorant' ? 'valorant' : 'lol')
+            }
+          >
+            <option value="lol">League of Legends</option>
+            <option value="valorant">Valorant</option>
+          </select>
+        </label>
+      </section>
 
       <section className="settings-section">
         <h2 className="settings-section-title">Data</h2>

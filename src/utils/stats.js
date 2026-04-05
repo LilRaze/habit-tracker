@@ -1,8 +1,8 @@
+import { STATS_CURVE_K } from '../data/stats'
 import { habits } from '../data/habits'
-import { CORE_STATS } from '../data/stats'
 import { getStatKeysForHabit } from '../data/habitStatMapping'
 import { getCountForWeekStart, getWeekStartKey, addDaysToDateStr } from './progress'
-import { rawStatToDisplay } from './statsConversion'
+import { deriveLongTermStatsDisplayFromRaw } from './statsConversion'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -38,7 +38,11 @@ function getWeeklyStatMultiplier(weekIndex) {
   return 1.0
 }
 
-export function deriveLongTermStats(completions, targetDays, activeHabits) {
+/**
+ * Raw stat bucket totals before the display curve (same accumulation as deriveLongTermStats).
+ * `targetDays` is accepted for API parity; not used in accumulation.
+ */
+export function deriveLongTermStatRawTotals(completions, targetDays, activeHabits) {
   const trackedHabits = toTrackedHabitSet(activeHabits).filter(
     (habitName) => getStatKeysForHabit(habitName).length > 0
   )
@@ -51,14 +55,14 @@ export function deriveLongTermStats(completions, targetDays, activeHabits) {
   }
 
   if (trackedHabits.length === 0) {
-    return { strength: 0, health: 0, intelligence: 0, discipline: 0, overall: 0 }
+    return null
   }
 
   const currentWeekStart = getWeekStartKey()
   const firstWeekStart = getFirstTrackedWeekStart(trackedHabits, completions)
 
   if (!firstWeekStart) {
-    return { strength: 0, health: 0, intelligence: 0, discipline: 0, overall: 0 }
+    return null
   }
 
   let weekStart = firstWeekStart
@@ -82,11 +86,13 @@ export function deriveLongTermStats(completions, targetDays, activeHabits) {
     weekIndex += 1
   }
 
-  const strength = rawStatToDisplay(rawTotals.strength)
-  const health = rawStatToDisplay(rawTotals.health)
-  const intelligence = rawStatToDisplay(rawTotals.intelligence)
-  const discipline = rawStatToDisplay(rawTotals.discipline)
-  const overall = Math.round((strength + health + intelligence + discipline) / 4)
+  return rawTotals
+}
 
-  return { strength, health, intelligence, discipline, overall }
+export function deriveLongTermStats(completions, targetDays, activeHabits) {
+  const rawTotals = deriveLongTermStatRawTotals(completions, targetDays, activeHabits)
+  if (!rawTotals) {
+    return { strength: 0, health: 0, intelligence: 0, discipline: 0, overall: 0 }
+  }
+  return deriveLongTermStatsDisplayFromRaw(rawTotals, STATS_CURVE_K)
 }
