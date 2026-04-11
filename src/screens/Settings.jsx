@@ -1,11 +1,24 @@
 import { useMemo, useState } from 'react'
+import { LogIn, LogOut, Loader2, Cloud, CloudOff, AlertCircle } from 'lucide-react'
 import { habits } from '../data/habits'
 import {
   TEST_TIER_OPTIONS,
   TEST_DIVISION_ROMAN,
   buildTestRankPayload,
 } from '../utils/testRankSelectors'
+import { useAuth } from '../contexts/AuthContext'
+import { useProfile } from '../contexts/ProfileContext'
+import UsernameModal from '../components/UsernameModal'
+import FriendsPanel from '../components/FriendsPanel'
 import './Settings.css'
+
+function cloudStatusLabel(cloudStatus) {
+  if (cloudStatus === 'loading') return 'Syncing…'
+  if (cloudStatus === 'conflict') return 'Resolve sync'
+  if (cloudStatus === 'error') return 'Sync issue'
+  if (cloudStatus === 'ready') return 'Saved to cloud'
+  return 'Cloud idle'
+}
 
 const SIM_MONTH_OPTIONS = [1, 3, 6, 12, 24, 36, 48, 60]
 
@@ -231,7 +244,25 @@ function Settings({
   onApplyTestRank,
   rankVisualTheme = 'lol',
   onRankVisualThemeChange,
+  cloudStatus = 'idle',
+  lastCloudError,
+  onAfterSignOut,
 }) {
+  const { user, loading: authLoading, signInWithGoogle, signOut, isConfigured } = useAuth()
+  const { profile, status: profileStatus, loadError: profileLoadError, refreshProfile, saveUsername } = useProfile()
+  const [usernameEditOpen, setUsernameEditOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    onAfterSignOut?.()
+  }
+
+  const handleSaveUsernameEdit = async (raw) => {
+    const result = await saveUsername(raw)
+    if (!result?.error) setUsernameEditOpen(false)
+    return result ?? { error: null }
+  }
+
   const [scenarioPassword, setScenarioPassword] = useState('')
   const [scenarioUnlocked, setScenarioUnlocked] = useState(false)
   const [scenarioError, setScenarioError] = useState('')
@@ -324,10 +355,94 @@ function Settings({
 
   const challengerNoDivision = tier === 'Challenger'
 
+  const displayUsername =
+    profile && typeof profile.username === 'string' && profile.username.trim() !== '' ? profile.username : null
+
   return (
     <div className="screen settings">
       <h1>Settings</h1>
       <p className="settings-subtitle">Configure your app preferences.</p>
+
+      <section className="settings-section settings-section-account">
+        <h2 className="settings-section-title">Account</h2>
+        {!isConfigured ? (
+          <div className="settings-account-row settings-account-row--muted">
+            <CloudOff size={16} strokeWidth={2} aria-hidden />
+            <span>Sign-in unavailable (configure Supabase).</span>
+          </div>
+        ) : authLoading ? (
+          <div className="settings-account-row">
+            <Loader2 size={18} strokeWidth={2} className="settings-account-spin" aria-hidden />
+            <span>Loading session…</span>
+          </div>
+        ) : !user ? (
+          <button type="button" className="settings-account-btn settings-account-btn--primary" onClick={() => signInWithGoogle()}>
+            <LogIn size={16} strokeWidth={2} aria-hidden />
+            <span>Continue with Google</span>
+          </button>
+        ) : (
+          <div className="settings-account-block">
+            <div className="settings-account-field">
+              <span className="settings-account-label">Email</span>
+              <span className="settings-account-value" title={user.email ?? ''}>
+                {user.email ?? '—'}
+              </span>
+            </div>
+            <div className="settings-account-field">
+              <span className="settings-account-label">Username</span>
+              {profileStatus === 'loading' ? (
+                <span className="settings-account-row">
+                  <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                  Loading…
+                </span>
+              ) : (
+                <span className="settings-account-value">{displayUsername ?? 'Not set'}</span>
+              )}
+            </div>
+            {profileLoadError ? (
+              <div className="settings-account-alert">
+                <AlertCircle size={16} strokeWidth={2} aria-hidden />
+                <span>{profileLoadError}</span>
+                <button type="button" className="settings-account-link" onClick={() => void refreshProfile()}>
+                  Retry
+                </button>
+              </div>
+            ) : null}
+            <div className="settings-account-row settings-account-sync">
+              <Cloud size={16} strokeWidth={2} aria-hidden />
+              <span className={cloudStatus === 'error' ? 'settings-account-sync--error' : ''}>
+                {cloudStatusLabel(cloudStatus)}
+              </span>
+              {lastCloudError ? (
+                <span className="settings-account-sync-error" title={lastCloudError}>
+                  ⚠
+                </span>
+              ) : null}
+            </div>
+            <div className="settings-account-actions">
+              <button type="button" className="settings-account-btn" onClick={() => setUsernameEditOpen(true)} disabled={profileStatus === 'loading'}>
+                Change username
+              </button>
+              <button type="button" className="settings-account-btn" onClick={() => void handleSignOut()}>
+                <LogOut size={16} strokeWidth={2} aria-hidden />
+                <span>Sign out</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <UsernameModal
+        open={usernameEditOpen}
+        title="Change username"
+        initialValue={displayUsername ?? ''}
+        submitLabel="Save"
+        forceOpen={false}
+        onSubmit={handleSaveUsernameEdit}
+        onClose={() => setUsernameEditOpen(false)}
+      />
+
+      <FriendsPanel />
 
       <section className="settings-section">
         <h2 className="settings-section-title">Rank display</h2>

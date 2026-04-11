@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import BottomNav from './components/BottomNav'
-import AuthBar from './components/AuthBar'
+import UsernameSetupGate from './components/UsernameSetupGate'
 import CloudConflictModal from './components/CloudConflictModal'
 import Overview from './screens/Overview'
 import Targets from './screens/Targets'
@@ -115,7 +115,7 @@ function App() {
   const resetAllProgress = async () => {
     if (
       !window.confirm(
-        'Reset all progress? Completions, target days, week data, and test overrides will be cleared.'
+        'Reset all app data on this device? This clears habit completions, active habits, weekly target days, quantity settings, rank display theme (back to default), test rank override, and simulated time offset. If you are signed in, the empty state will be saved to the cloud as well.'
       )
     ) {
       return
@@ -214,7 +214,7 @@ function App() {
 
   return (
     <div className="app">
-      <AuthBar cloudStatus={cloudStatus} lastCloudError={lastError} onAfterSignOut={handleAfterSignOut} />
+      <UsernameSetupGate />
       {conflict ? (
         <CloudConflictModal
           onUseCloud={() => {
@@ -245,6 +245,9 @@ function App() {
           onApplyStatsPreset={handleApplyStatsPreset}
           onApplyTestRank={handleApplyTestRank}
           onApplyTimeOffset={handleApplyTimeOffset}
+          cloudStatus={cloudStatus}
+          lastCloudError={lastError}
+          onAfterSignOut={handleAfterSignOut}
         />
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
