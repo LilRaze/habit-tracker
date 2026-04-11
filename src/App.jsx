@@ -6,6 +6,7 @@ import Overview from './screens/Overview'
 import Targets from './screens/Targets'
 import Log from './screens/Log'
 import Rank from './screens/Rank'
+import Social from './screens/Social'
 import Settings from './screens/Settings'
 import { useAuth } from './contexts/AuthContext'
 import { useCloudPersistence } from './hooks/useCloudPersistence'
@@ -37,6 +38,7 @@ const TABS = {
   targets: Targets,
   log: Log,
   rank: Rank,
+  social: Social,
   settings: Settings,
 }
 

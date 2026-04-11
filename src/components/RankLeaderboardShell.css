@@ -1,0 +1,108 @@
+.rank-lb-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: min(70vh, 100%);
+  margin: -24px -20px -100px;
+  margin-bottom: calc(-100px - var(--safe-bottom));
+  padding: 16px 20px 24px;
+  background: var(--bg-primary, #0f0f12);
+}
+
+.rank-lb-shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.rank-lb-shell-back {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rank-lb-shell-back:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.rank-lb-shell-title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rank-lb-shell-spacer {
+  flex: 0 0 auto;
+  width: 64px;
+}
+
+.rank-lb-shell-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rank-lb-seg {
+  display: flex;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.rank-lb-seg-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rank-lb-seg-btn--active {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--text-primary);
+}
+
+.rank-lb-habit-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.rank-lb-shell-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.rank-lb-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

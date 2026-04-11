@@ -37,3 +37,8 @@ body {
   min-height: 100dvh;
   min-height: 100vh;
 }
+
+/* Optical vertical alignment: emblems read slightly high next to text in tables/lists */
+.rank-emblem-optical-nudge {
+  transform: translateY(6px);
+}

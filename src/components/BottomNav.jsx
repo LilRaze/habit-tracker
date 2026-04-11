@@ -1,10 +1,11 @@
-import { BarChart3, Target, PlusCircle, Trophy, Settings } from 'lucide-react'
+import { BarChart3, Target, PlusCircle, Trophy, Users, Settings } from 'lucide-react'
 
 const TABS = [
   { id: 'overview', label: 'Overview', Icon: BarChart3 },
   { id: 'targets', label: 'Targets', Icon: Target },
   { id: 'log', label: 'Log', Icon: PlusCircle },
   { id: 'rank', label: 'Rank', Icon: Trophy },
+  { id: 'social', label: 'Social', Icon: Users },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ]
 

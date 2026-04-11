@@ -1,0 +1,132 @@
+.social-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.social-header h1 {
+  margin: 0;
+}
+
+.social-refresh {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.social-refresh:hover:not(:disabled) {
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.social-refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.social-muted {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.social-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #f87171;
+}
+
+.social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.social-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.social-row:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.social-row-emblem {
+  flex-shrink: 0;
+}
+
+.social-row-emblem .rank-emblem,
+.social-row-emblem.rank-emblem-wrap .rank-emblem {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.social-row-emblem.rank-emblem-wrap--helmet .rank-emblem--helmet {
+  width: 48px;
+  height: 48px;
+}
+
+.social-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.social-row-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-row-sub {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Friend rank detail: same vertical rhythm as Rank tab (rank-screen-head + rank-cards from Rank.css) */
+.social-detail.social-detail--rank {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.social-detail--rank .rank-screen-head h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Match space below header to Rank tab’s first card (rank-cards margin-top) */
+.social-detail--rank > .social-muted {
+  margin-top: 24px;
+}

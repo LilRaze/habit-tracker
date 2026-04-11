@@ -1,0 +1,153 @@
+.friends-lb {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.friends-lb--embedded {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.friends-lb-rank-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.friends-lb-emblem--table.rank-emblem-wrap,
+.friends-lb-emblem--table {
+  flex-shrink: 0;
+}
+
+.friends-lb-emblem--table .rank-emblem,
+.friends-lb-emblem--table.rank-emblem-wrap .rank-emblem {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.friends-lb-emblem--table.rank-emblem-wrap--helmet .rank-emblem--helmet {
+  width: 40px;
+  height: 40px;
+}
+
+.friends-lb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.friends-lb-title {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.friends-lb-sub {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.friends-lb-refresh {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.friends-lb-refresh:hover:not(:disabled) {
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.friends-lb-refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.friends-lb-muted {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.friends-lb-error {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: #f87171;
+}
+
+.friends-lb-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+}
+
+.friends-lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.friends-lb-table th,
+.friends-lb-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.friends-lb-table th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.friends-lb-table tr:last-child td {
+  border-bottom: none;
+}
+
+.friends-lb-row--self {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.friends-lb-row--self td {
+  font-weight: 500;
+}
+
+.friends-lb-name {
+  color: var(--text-primary);
+}
+
+.friends-lb-you {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.friends-lb-lp {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.friends-lb-na {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
