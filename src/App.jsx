@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import BottomNav from './components/BottomNav'
 import UsernameSetupGate from './components/UsernameSetupGate'
 import CloudConflictModal from './components/CloudConflictModal'
@@ -14,11 +14,19 @@ import {
   STORAGE_COMPLETIONS,
   STORAGE_TARGET_DAYS,
   STORAGE_ACTIVE_HABITS,
+  STORAGE_HABIT_CONFIG_HISTORY,
   STORAGE_QUANTITY_SETTINGS,
   STORAGE_RANKS_LEGACY,
   STORAGE_TEST_RANK_OVERRIDE,
 } from './utils/storageKeys'
-import { loadCompletions, loadTargetDays, loadActiveHabits, loadQuantitySettings } from './utils/persistedState'
+import {
+  loadCompletions,
+  loadTargetDays,
+  loadActiveHabits,
+  loadHabitConfigHistory,
+  loadQuantitySettings,
+  persistHabitConfigHistory,
+} from './utils/persistedState'
 import {
   normalizeSnapshot,
   loadLocalSnapshot,
@@ -31,6 +39,14 @@ import { getTodayDateString, clearTimeOffsetMonths, setTimeOffsetMonths, getTime
 import { generateTestHabitData, applyStatsPreset } from './utils/testData'
 import { generateSimulationHistory } from './utils/simulation'
 import { upsertHabitUserState } from './services/cloudState'
+import { sanitizeQuantityTrackingValue } from './utils/quantityInput'
+import {
+  recordHabitConfigChange,
+  sortUniqueDayIndices,
+  defaultTargetDayIndicesForHabit,
+  ensureHabitConfigHistoryShape,
+} from './utils/habitConfigHistory'
+import { habits } from './data/habits'
 import './App.css'
 
 const TABS = {
@@ -49,7 +65,14 @@ function App() {
   const [completions, setCompletions] = useState(loadCompletions)
   const [activeHabits, setActiveHabits] = useState(loadActiveHabits)
   const [targetDays, setTargetDays] = useState(loadTargetDays)
+  const [habitConfigHistory, setHabitConfigHistory] = useState(() => {
+    const a = loadActiveHabits()
+    return loadHabitConfigHistory(a, loadTargetDays())
+  })
   const [quantitySettings, setQuantitySettings] = useState(loadQuantitySettings)
+
+  const configSyncRef = useRef({ activeHabits, targetDays })
+  configSyncRef.current = { activeHabits, targetDays }
   const [timeOffsetTick, setTimeOffsetTick] = useState(0)
   const [rankVisualTheme, setRankVisualTheme] = useState(loadRankVisualTheme)
   const [testRankOverride, setTestRankOverride] = useState(() => loadTestRankOverride())
@@ -62,6 +85,7 @@ function App() {
     setCompletions(n.completions)
     setTargetDays(n.targetDays)
     setActiveHabits(n.activeHabits)
+    setHabitConfigHistory(n.habitConfigHistory)
     setQuantitySettings(n.quantitySettings)
     setRankVisualTheme(n.rankVisualTheme)
     setTestRankOverride(n.testRankOverride)
@@ -74,12 +98,22 @@ function App() {
       completions,
       targetDays,
       activeHabits,
+      habitConfigHistory,
       quantitySettings,
       rankVisualTheme,
       testRankOverride,
       timeOffsetMonths: getTimeOffsetMonths(),
     }),
-    [completions, targetDays, activeHabits, quantitySettings, rankVisualTheme, testRankOverride, timeOffsetTick]
+    [
+      completions,
+      targetDays,
+      activeHabits,
+      habitConfigHistory,
+      quantitySettings,
+      rankVisualTheme,
+      testRankOverride,
+      timeOffsetTick,
+    ]
   )
 
   const { cloudStatus, conflict, lastError, resolveUseCloud, resolveUseDevice } = useCloudPersistence({
@@ -107,6 +141,10 @@ function App() {
   }, [activeHabits])
 
   useEffect(() => {
+    persistHabitConfigHistory(habitConfigHistory)
+  }, [habitConfigHistory])
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_QUANTITY_SETTINGS, JSON.stringify(quantitySettings))
   }, [quantitySettings])
 
@@ -117,7 +155,7 @@ function App() {
   const resetAllProgress = async () => {
     if (
       !window.confirm(
-        'Reset all app data on this device? This clears habit completions, active habits, weekly target days, quantity settings, rank display theme (back to default), test rank override, and simulated time offset. If you are signed in, the empty state will be saved to the cloud as well.'
+        'Reset all app data on this device? This clears habit completions, active habits, weekly target days, habit configuration history, quantity settings, rank display theme (back to default), test rank override, and simulated time offset. If you are signed in, the empty state will be saved to the cloud as well.'
       )
     ) {
       return
@@ -125,6 +163,7 @@ function App() {
     localStorage.removeItem(STORAGE_COMPLETIONS)
     localStorage.removeItem(STORAGE_TARGET_DAYS)
     localStorage.removeItem(STORAGE_ACTIVE_HABITS)
+    localStorage.removeItem(STORAGE_HABIT_CONFIG_HISTORY)
     localStorage.removeItem(STORAGE_QUANTITY_SETTINGS)
     localStorage.removeItem(STORAGE_RANKS_LEGACY)
     localStorage.removeItem(STORAGE_TEST_RANK_OVERRIDE)
@@ -135,6 +174,7 @@ function App() {
     setCompletions(empty.completions)
     setActiveHabits(empty.activeHabits)
     setTargetDays(empty.targetDays)
+    setHabitConfigHistory(empty.habitConfigHistory)
     setQuantitySettings(empty.quantitySettings)
     setRankVisualTheme('lol')
     setTestRankOverride(null)
@@ -144,23 +184,43 @@ function App() {
   }
 
   const toggleActiveHabit = (habitName) => {
-    setActiveHabits((prev) =>
-      prev.includes(habitName)
-        ? prev.filter((name) => name !== habitName)
-        : [...prev, habitName]
+    const today = getTodayDateString()
+    const { activeHabits: a, targetDays: t } = configSyncRef.current
+    const nextActive = a.includes(habitName) ? a.filter((n) => n !== habitName) : [...a, habitName]
+    const habit = habits.find((h) => h.name === habitName)
+    const rawDays = t[habitName]
+    const nextDays =
+      Array.isArray(rawDays) && rawDays.length > 0
+        ? sortUniqueDayIndices(rawDays)
+        : defaultTargetDayIndicesForHabit(habit ?? { defaultWeeklyTarget: 3, name: habitName })
+    setActiveHabits(nextActive)
+    setHabitConfigHistory((hist) =>
+      recordHabitConfigChange(hist, habitName, today, {
+        isActive: nextActive.includes(habitName),
+        targetDays: nextDays,
+      })
     )
   }
 
   const toggleTargetDay = (habitName, dayIndex) => {
+    let nextDaysForHistory = null
     setTargetDays((prev) => {
       const days = prev[habitName] ?? []
       const has = days.includes(dayIndex)
       const next = { ...prev }
-      next[habitName] = has
-        ? days.filter((d) => d !== dayIndex)
-        : [...days, dayIndex].sort((a, b) => a - b)
+      const nextDays = has ? days.filter((d) => d !== dayIndex) : [...days, dayIndex].sort((a, b) => a - b)
+      next[habitName] = nextDays
+      nextDaysForHistory = nextDays
       return next
     })
+    if (!configSyncRef.current.activeHabits.includes(habitName)) return
+    const today = getTodayDateString()
+    setHabitConfigHistory((hist) =>
+      recordHabitConfigChange(hist, habitName, today, {
+        isActive: true,
+        targetDays: sortUniqueDayIndices(nextDaysForHistory ?? []),
+      })
+    )
   }
 
   const toggleHabit = (habitName, dateStr) => {
@@ -178,13 +238,21 @@ function App() {
   }
 
   const updateQuantitySetting = (habitName, value) => {
-    setQuantitySettings((prev) => ({ ...prev, [habitName]: value }))
+    const cleaned = sanitizeQuantityTrackingValue(value)
+    setQuantitySettings((prev) => ({ ...prev, [habitName]: cleaned }))
   }
 
   const applyGeneratedTestData = (data) => {
     setCompletions(data.completions)
     setActiveHabits(data.activeHabits)
     setTargetDays(data.targetDays)
+    setHabitConfigHistory(
+      ensureHabitConfigHistoryShape(
+        data.habitConfigHistory ?? null,
+        data.activeHabits ?? [],
+        data.targetDays ?? {}
+      )
+    )
     setQuantitySettings(data.quantitySettings)
     bumpTimeOffset()
   }
@@ -234,6 +302,7 @@ function App() {
           activeHabits={activeHabits}
           onToggleActiveHabit={toggleActiveHabit}
           targetDays={targetDays}
+          habitConfigHistory={habitConfigHistory}
           onToggleTargetDay={toggleTargetDay}
           quantitySettings={quantitySettings}
           onUpdateQuantitySetting={updateQuantitySetting}

@@ -2,6 +2,8 @@
 export const STORAGE_COMPLETIONS = 'habit-tracker-completions'
 export const STORAGE_TARGET_DAYS = 'habit-tracker-target-days'
 export const STORAGE_ACTIVE_HABITS = 'habit-tracker-active-habits'
+/** Per-habit segments: effectiveFrom, isActive, targetDays — used for historical rank weeks. */
+export const STORAGE_HABIT_CONFIG_HISTORY = 'habit-tracker-habit-config-history'
 export const STORAGE_QUANTITY_SETTINGS = 'habit-tracker-quantity-settings'
 export const STORAGE_RANKS_LEGACY = 'habit-tracker-ranks'
 

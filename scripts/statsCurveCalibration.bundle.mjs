@@ -211,7 +211,7 @@ var habits = [
   },
   {
     id: "no-social-media-day",
-    name: "No social media day",
+    name: "No social media",
     defaultWeeklyTarget: 3,
     hasQuantity: false,
     quantityLabel: null,
@@ -565,7 +565,7 @@ var ARCHETYPES = [
   {
     id: "A17",
     name: "Unmapped habits only (no stat buckets)",
-    computeRatio: (ctx) => ["Tooth pick use", "Gratitude practice", "No social media day"].includes(ctx.habitName) ? 0.9 : 0
+    computeRatio: (ctx) => ["Tooth pick use", "Gratitude practice", "No social media"].includes(ctx.habitName) ? 0.9 : 0
   },
   { id: "A18", name: "Many active habits sparse completions", computeRatio: (ctx) => 0.12 + 0.05 * ctx.rng() },
   { id: "A19", name: "Few active habits excellent attainment", computeRatio: () => 1 },
@@ -586,7 +586,7 @@ var ARCHETYPES = [
   { id: "A28", name: "Low-target habit gaming (always hit small targets)", computeRatio: () => 1 },
   { id: "A29", name: "High-target struggle", computeRatio: () => 0.48 },
   { id: "A30", name: "Single-habit deep focus", modifiers: { selectiveFocus: true }, computeRatio: (ctx) => ctx.habitIndex === 0 ? 1 : 0.05 },
-  { id: "A31", name: "Mapped + unmapped mix", computeRatio: (ctx) => ["Tooth pick use", "Gratitude practice", "No social media day"].includes(ctx.habitName) ? 0.88 : 0.75 },
+  { id: "A31", name: "Mapped + unmapped mix", computeRatio: (ctx) => ["Tooth pick use", "Gratitude practice", "No social media"].includes(ctx.habitName) ? 0.88 : 0.75 },
   { id: "A32", name: "Double-mapped habits emphasized", computeRatio: (ctx) => {
     const dbl = ["Gym", "Sleep", "Study"].includes(ctx.habitName);
     return dbl ? 0.96 : 0.5;

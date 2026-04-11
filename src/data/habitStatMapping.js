@@ -32,6 +32,7 @@ export const HABIT_TO_STAT_KEYS = {
   Journaling: ['intelligence', 'discipline'],
   Reflection: ['intelligence', 'discipline'],
   'No phone': ['intelligence', 'discipline'],
+  'No social media': ['intelligence', 'discipline'],
   'Help someone': ['intelligence', 'discipline'],
   'Spend time with family': ['intelligence', 'discipline'],
   'Meet someone new': ['intelligence', 'discipline'],

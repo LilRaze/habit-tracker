@@ -20,7 +20,7 @@ export const HABIT_CATEGORY_POINTS = {
   'No phone': { Discipline: 9, Intelligence: 5, Health: 2 },
   Reflection: { Intelligence: 7, Discipline: 6 },
   'Gratitude practice': { Health: 5, Intelligence: 4, Discipline: 6 },
-  'No social media day': { Discipline: 9, Intelligence: 5 },
+  'No social media': { Discipline: 9, Intelligence: 5 },
   'Cold shower': { Discipline: 8, Health: 6 },
   'Help someone': { Health: 4, Discipline: 5, Intelligence: 3 },
   'Spend time with family': { Health: 6, Discipline: 4, Intelligence: 2 },

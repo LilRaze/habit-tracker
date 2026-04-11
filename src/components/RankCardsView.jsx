@@ -9,6 +9,7 @@ import '../screens/Rank.css'
  * @param {Record<string, string[]>} props.completions
  * @param {Record<string, number[]>} props.targetDays
  * @param {string[]} props.activeHabits
+ * @param {import('../utils/habitConfigHistory').HabitConfigHistory} [props.habitConfigHistory]
  * @param {import('../utils/testRankOverride').TestRankOverride | null} [props.testRankOverride]
  * @param {'lol'|'valorant'} [props.rankVisualTheme]
  * @param {number} [props.timeOffsetTick]
@@ -17,13 +18,15 @@ export default function RankCardsView({
   completions,
   targetDays,
   activeHabits,
+  habitConfigHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
 }) {
   const rankData = useMemo(
-    () => deriveRanksV4(completions ?? {}, targetDays ?? {}, activeHabits ?? []),
-    [completions, targetDays, activeHabits, timeOffsetTick]
+    () =>
+      deriveRanksV4(completions ?? {}, targetDays ?? {}, activeHabits ?? [], habitConfigHistory ?? null),
+    [completions, targetDays, activeHabits, habitConfigHistory, timeOffsetTick]
   )
 
   const activeSet = new Set(activeHabits ?? [])

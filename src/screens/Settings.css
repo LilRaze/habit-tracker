@@ -1,5 +1,27 @@
+.settings-page-head {
+  margin-bottom: 12px;
+}
+
+.settings-page-head h1 {
+  margin: 0 0 4px;
+}
+
 .settings-subtitle {
-  margin-bottom: 24px;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.settings-primary-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.settings-primary-stack > .settings-section {
+  margin-bottom: 0;
 }
 
 .settings-section-account {
@@ -289,7 +311,22 @@
 }
 
 .settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 14px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section-rank .settings-test-hint {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.settings-section-data {
+  padding-top: 4px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
 }
 
 .settings-section-title {
@@ -298,7 +335,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 .settings-reset-btn {
@@ -323,10 +360,25 @@
 }
 
 .settings-section-test {
-  padding: 16px;
+  padding: 14px;
   border: 1px dashed var(--border);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.15);
+}
+
+.settings-section-dev {
+  margin-top: 6px;
+  opacity: 0.94;
+}
+
+.settings-section-dev .settings-section-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.settings-section-dev + .settings-section-dev {
+  margin-top: 10px;
 }
 
 .settings-test-note {

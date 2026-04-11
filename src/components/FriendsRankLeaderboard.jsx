@@ -8,7 +8,16 @@ import { computeLeaderboardHabitRow } from '../utils/leaderboardHabit'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
 import './FriendsRankLeaderboard.css'
 
-function mergeOverallRows(user, profile, friendEntries, completions, targetDays, activeHabits, testRankOverride) {
+function mergeOverallRows(
+  user,
+  profile,
+  friendEntries,
+  completions,
+  targetDays,
+  activeHabits,
+  habitConfigHistory,
+  testRankOverride
+) {
   if (!user?.id) return []
   const displayName =
     profile && typeof profile.username === 'string' && profile.username.trim() !== ''
@@ -21,6 +30,7 @@ function mergeOverallRows(user, profile, friendEntries, completions, targetDays,
     completions,
     targetDays,
     activeHabits,
+    habitConfigHistory,
     testRankOverride
   )
   if (!selfEntry) return []
@@ -38,6 +48,7 @@ export default function FriendsRankLeaderboard({
   completions,
   targetDays,
   activeHabits,
+  habitConfigHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
@@ -54,7 +65,16 @@ export default function FriendsRankLeaderboard({
 
   const mergedOverall = useMemo(
     () =>
-      mergeOverallRows(user, profile, friendEntries, completions, targetDays, activeHabits, testRankOverride),
+      mergeOverallRows(
+        user,
+        profile,
+        friendEntries,
+        completions,
+        targetDays,
+        activeHabits,
+        habitConfigHistory,
+        testRankOverride
+      ),
     [
       user?.id,
       user?.email,
@@ -63,6 +83,7 @@ export default function FriendsRankLeaderboard({
       completions,
       targetDays,
       activeHabits,
+      habitConfigHistory,
       testRankOverride,
       timeOffsetTick,
     ]

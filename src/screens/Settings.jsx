@@ -360,9 +360,12 @@ function Settings({
 
   return (
     <div className="screen settings">
-      <h1>Settings</h1>
-      <p className="settings-subtitle">Configure your app preferences.</p>
+      <header className="settings-page-head">
+        <h1>Settings</h1>
+        <p className="settings-subtitle">Configure your app preferences.</p>
+      </header>
 
+      <div className="settings-primary-stack">
       <section className="settings-section settings-section-account">
         <h2 className="settings-section-title">Account</h2>
         {!isConfigured ? (
@@ -443,8 +446,9 @@ function Settings({
       />
 
       <FriendsPanel />
+      </div>
 
-      <section className="settings-section">
+      <section className="settings-section settings-section-rank">
         <h2 className="settings-section-title">Rank display</h2>
         <p className="settings-test-hint">Visual theme only — rank progression and LP are unchanged.</p>
         <label className="settings-test-row">
@@ -462,14 +466,14 @@ function Settings({
         </label>
       </section>
 
-      <section className="settings-section">
+      <section className="settings-section settings-section-data">
         <h2 className="settings-section-title">Data</h2>
         <button type="button" className="settings-reset-btn" onClick={() => onResetAllProgress?.()}>
           Reset app data
         </button>
       </section>
 
-      <section className="settings-section settings-section-test">
+      <section className="settings-section settings-section-test settings-section-dev">
         <h2 className="settings-section-title">Simulation tools (temporary)</h2>
         <p className="settings-test-note">
           Build a realistic completion history, then instantly preview per-habit ranks, overall rank, and
@@ -616,7 +620,7 @@ function Settings({
       </section>
 
       {scenarioUnlocked && (
-        <section className="settings-section settings-section-test">
+        <section className="settings-section settings-section-test settings-section-dev">
           <h2 className="settings-section-title">Rank override (temporary)</h2>
           <div className="settings-test-block">
             <h3 className="settings-test-heading">Set rank manually (overall only)</h3>

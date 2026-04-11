@@ -40,7 +40,7 @@ export const ARCHETYPES = [
     id: 'A17',
     name: 'Unmapped habits only (no stat buckets)',
     computeRatio: (ctx) =>
-      ['Tooth pick use', 'Gratitude practice', 'No social media day'].includes(ctx.habitName)
+      ['Tooth pick use', 'Gratitude practice', 'No social media'].includes(ctx.habitName)
         ? 0.9
         : 0,
   },
@@ -63,7 +63,7 @@ export const ARCHETYPES = [
   { id: 'A28', name: 'Low-target habit gaming (always hit small targets)', computeRatio: () => 1 },
   { id: 'A29', name: 'High-target struggle', computeRatio: () => 0.48 },
   { id: 'A30', name: 'Single-habit deep focus', modifiers: { selectiveFocus: true }, computeRatio: (ctx) => (ctx.habitIndex === 0 ? 1 : 0.05) },
-  { id: 'A31', name: 'Mapped + unmapped mix', computeRatio: (ctx) => (['Tooth pick use', 'Gratitude practice', 'No social media day'].includes(ctx.habitName) ? 0.88 : 0.75) },
+  { id: 'A31', name: 'Mapped + unmapped mix', computeRatio: (ctx) => (['Tooth pick use', 'Gratitude practice', 'No social media'].includes(ctx.habitName) ? 0.88 : 0.75) },
   { id: 'A32', name: 'Double-mapped habits emphasized', computeRatio: (ctx) => {
       const dbl = ['Gym', 'Sleep', 'Study'].includes(ctx.habitName)
       return dbl ? 0.96 : 0.5

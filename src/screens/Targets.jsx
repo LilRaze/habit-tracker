@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { habits } from '../data/habits'
 import {
   Activity,
@@ -51,7 +52,7 @@ const BUBBLE_META = {
   'No phone': { label: 'No phone', Icon: Smartphone },
   Reflection: { label: 'Reflect', Icon: StretchHorizontal },
   'Gratitude practice': { label: 'Gratitude', Icon: MessageCircleHeart },
-  'No social media day': { label: 'No social media', Icon: GlassWater },
+  'No social media': { label: 'No social media', Icon: GlassWater },
   'Cold shower': { label: 'Cold shower', Icon: Snowflake },
   'Help someone': { label: 'Help someone', Icon: HandHelping },
   'Spend time with family': { label: 'Family time', Icon: Users },
@@ -76,6 +77,23 @@ function Targets({
   const activeHabitList = habits.filter((habit) => activeSet.has(habit.name))
   const inactiveHabitList = habits.filter((habit) => !activeSet.has(habit.name))
 
+  const prevActiveRef = useRef(activeHabits)
+
+  useLayoutEffect(() => {
+    const prev = prevActiveRef.current ?? []
+    const curr = activeHabits ?? []
+    prevActiveRef.current = curr
+    if (!Array.isArray(prev) || !Array.isArray(curr) || curr.length <= prev.length) return
+    const prevSet = new Set(prev)
+    const added = curr.filter((name) => !prevSet.has(name))
+    const lastAdded = added.length ? added[added.length - 1] : null
+    if (!lastAdded) return
+    const habitMeta = habits.find((h) => h.name === lastAdded)
+    const anchorId = habitMeta ? `targets-habit-card-${habitMeta.id}` : null
+    const el = anchorId ? document.getElementById(anchorId) : null
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  }, [activeHabits])
+
   return (
     <div className="screen targets">
       <h1>Habits</h1>
@@ -89,7 +107,7 @@ function Targets({
           const Icon = meta.Icon
 
           return (
-            <div key={habit.name} className="targets-habit-card">
+            <div key={habit.name} id={`targets-habit-card-${habit.id}`} className="targets-habit-card">
               <div className="targets-habit-header">
                 <h3 className="targets-habit-name">
                   <Icon size={16} strokeWidth={2} className="targets-habit-icon" />
@@ -126,11 +144,12 @@ function Targets({
                 <div className="targets-quantity-row">
                   <input
                     type="text"
+                    inputMode="decimal"
                     className="targets-quantity-input"
                     value={quantityValue}
                     onChange={(e) => onUpdateQuantitySetting?.(habit.name, e.target.value)}
                     placeholder={habit.quantityPlaceholder ?? ''}
-                    aria-label={`${habit.name} quantity`}
+                    aria-label={`${habit.name} quantity${habit.quantityLabel ? ` (${habit.quantityLabel})` : ''}`}
                   />
                   <span className="targets-quantity-label">{habit.quantityLabel}</span>
                 </div>

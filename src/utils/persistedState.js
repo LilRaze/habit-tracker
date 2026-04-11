@@ -7,8 +7,17 @@ import {
   STORAGE_COMPLETIONS,
   STORAGE_TARGET_DAYS,
   STORAGE_ACTIVE_HABITS,
+  STORAGE_HABIT_CONFIG_HISTORY,
   STORAGE_QUANTITY_SETTINGS,
 } from './storageKeys'
+import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import {
+  migrateActiveHabits,
+  migrateCompletions,
+  migrateHabitConfigHistoryKeys,
+  migrateQuantitySettings,
+  migrateTargetDays,
+} from './habitNameMigration'
 
 const initialCompletions = {}
 habits.forEach((h) => {
@@ -25,10 +34,11 @@ export function loadCompletions() {
     if (!stored) return { ...initialCompletions }
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return { ...initialCompletions }
+    const migrated = migrateCompletions(parsed)
     const result = { ...initialCompletions }
     habits.forEach((h) => {
-      if (Array.isArray(parsed[h.name])) {
-        result[h.name] = parsed[h.name].filter(
+      if (Array.isArray(migrated[h.name])) {
+        result[h.name] = migrated[h.name].filter(
           (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)
         )
       }
@@ -53,10 +63,11 @@ export function loadTargetDays() {
     if (!stored) return getInitialTargetDays()
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return getInitialTargetDays()
+    const migrated = migrateTargetDays(parsed)
     const result = getInitialTargetDays()
     habits.forEach((h) => {
-      if (Array.isArray(parsed[h.name])) {
-        const valid = parsed[h.name].filter(
+      if (Array.isArray(migrated[h.name])) {
+        const valid = migrated[h.name].filter(
           (d) => typeof d === 'number' && d >= 0 && d <= 6 && Number.isInteger(d)
         )
         result[h.name] = [...new Set(valid)].sort((a, b) => a - b)
@@ -78,11 +89,30 @@ export function loadActiveHabits() {
     if (!stored) return getInitialActiveHabits()
     const parsed = JSON.parse(stored)
     if (!Array.isArray(parsed)) return getInitialActiveHabits()
+    const migrated = migrateActiveHabits(parsed)
     const validNames = new Set(habits.map((h) => h.name))
-    return [...new Set(parsed.filter((name) => typeof name === 'string' && validNames.has(name)))]
+    return [...new Set(migrated.filter((name) => typeof name === 'string' && validNames.has(name)))]
   } catch {
     return getInitialActiveHabits()
   }
+}
+
+/**
+ * Load + migrate habit config history using current active habits and target days from storage.
+ */
+export function loadHabitConfigHistory(activeHabits, targetDays) {
+  let raw = null
+  try {
+    const stored = localStorage.getItem(STORAGE_HABIT_CONFIG_HISTORY)
+    if (stored) raw = migrateHabitConfigHistoryKeys(JSON.parse(stored))
+  } catch {
+    raw = null
+  }
+  return ensureHabitConfigHistoryShape(raw, activeHabits, targetDays)
+}
+
+export function persistHabitConfigHistory(habitConfigHistory) {
+  localStorage.setItem(STORAGE_HABIT_CONFIG_HISTORY, JSON.stringify(habitConfigHistory))
 }
 
 export function getInitialQuantitySettings() {
@@ -99,9 +129,10 @@ export function loadQuantitySettings() {
     if (!stored) return getInitialQuantitySettings()
     const parsed = JSON.parse(stored)
     if (typeof parsed !== 'object' || parsed === null) return getInitialQuantitySettings()
+    const migrated = migrateQuantitySettings(parsed)
     const result = getInitialQuantitySettings()
     habits.forEach((h) => {
-      const value = parsed[h.name]
+      const value = migrated[h.name]
       if (typeof value === 'string') result[h.name] = value
       if (typeof value === 'number') result[h.name] = String(value)
     })

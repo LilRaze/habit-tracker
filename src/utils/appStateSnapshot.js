@@ -2,26 +2,33 @@ import {
   loadCompletions,
   loadTargetDays,
   loadActiveHabits,
+  loadHabitConfigHistory,
   loadQuantitySettings,
   persistCompletions,
   persistTargetDays,
   persistActiveHabits,
+  persistHabitConfigHistory,
   persistQuantitySettings,
   getInitialCompletions,
   getInitialTargetDays,
   getInitialActiveHabits,
   getInitialQuantitySettings,
 } from './persistedState'
+import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { migrateSnapshotHabitKeys } from './habitNameMigration'
 import { loadRankVisualTheme, saveRankVisualTheme } from './rankVisualTheme'
 import { loadTestRankOverride, saveTestRankOverride } from './testRankOverride'
 import { getTimeOffsetMonths, setTimeOffsetMonths } from './now'
 
 /** Fresh account / after reset (aligned with local defaults). */
 export function getEmptySnapshot() {
+  const activeHabits = getInitialActiveHabits()
+  const targetDays = getInitialTargetDays()
   return {
     completions: getInitialCompletions(),
-    targetDays: getInitialTargetDays(),
-    activeHabits: getInitialActiveHabits(),
+    targetDays,
+    activeHabits,
+    habitConfigHistory: ensureHabitConfigHistoryShape(null, activeHabits, targetDays),
     quantitySettings: getInitialQuantitySettings(),
     rankVisualTheme: 'lol',
     testRankOverride: null,
@@ -34,6 +41,7 @@ export function getEmptySnapshot() {
  * @property {Record<string, string[]>} completions
  * @property {Record<string, number[]>} targetDays
  * @property {string[]} activeHabits
+ * @property {import('./habitConfigHistory').HabitConfigHistory} habitConfigHistory
  * @property {Record<string, string>} quantitySettings
  * @property {'lol'|'valorant'} rankVisualTheme
  * @property {import('./testRankOverride').TestRankOverride | null} [testRankOverride]
@@ -41,10 +49,13 @@ export function getEmptySnapshot() {
  */
 
 export function loadLocalSnapshot() {
+  const activeHabits = loadActiveHabits()
+  const targetDays = loadTargetDays()
   return {
     completions: loadCompletions(),
-    targetDays: loadTargetDays(),
-    activeHabits: loadActiveHabits(),
+    targetDays,
+    activeHabits,
+    habitConfigHistory: loadHabitConfigHistory(activeHabits, targetDays),
     quantitySettings: loadQuantitySettings(),
     rankVisualTheme: loadRankVisualTheme(),
     testRankOverride: loadTestRankOverride(),
@@ -59,7 +70,7 @@ export function loadLocalSnapshot() {
  */
 export function rowToSnapshot(row) {
   const local = loadLocalSnapshot()
-  return {
+  const migrated = migrateSnapshotHabitKeys({
     completions:
       row.completions && typeof row.completions === 'object' ? row.completions : getInitialCompletions(),
     targetDays:
@@ -69,6 +80,18 @@ export function rowToSnapshot(row) {
       row.quantity_settings && typeof row.quantity_settings === 'object'
         ? row.quantity_settings
         : getInitialQuantitySettings(),
+    habitConfigHistory:
+      row.habit_config_history && typeof row.habit_config_history === 'object'
+        ? row.habit_config_history
+        : undefined,
+  })
+  const { completions, targetDays, activeHabits, quantitySettings, habitConfigHistory: rawHistory } = migrated
+  return {
+    completions,
+    targetDays,
+    activeHabits,
+    habitConfigHistory: ensureHabitConfigHistoryShape(rawHistory, activeHabits, targetDays),
+    quantitySettings,
     rankVisualTheme: row.rank_visual_theme === 'valorant' ? 'valorant' : 'lol',
     testRankOverride: local.testRankOverride,
     timeOffsetMonths: local.timeOffsetMonths,
@@ -77,11 +100,20 @@ export function rowToSnapshot(row) {
 
 /** Normalize snapshot from row (fix property name quantity_settings -> quantitySettings). */
 export function normalizeSnapshot(s) {
-  const qty = s.quantity_settings ?? s.quantitySettings ?? getInitialQuantitySettings()
-  return {
+  const migrated = migrateSnapshotHabitKeys({
     completions: s.completions ?? getInitialCompletions(),
-    targetDays: s.targetDays ?? getInitialTargetDays(),
-    activeHabits: s.activeHabits ?? getInitialActiveHabits(),
+    targetDays: s.targetDays ?? s.target_days ?? getInitialTargetDays(),
+    activeHabits: s.activeHabits ?? s.active_habits ?? getInitialActiveHabits(),
+    quantitySettings: s.quantity_settings ?? s.quantitySettings ?? getInitialQuantitySettings(),
+    habitConfigHistory: s.habit_config_history ?? s.habitConfigHistory,
+  })
+  const { completions, targetDays, activeHabits, quantitySettings: qty, habitConfigHistory: rawHistory } =
+    migrated
+  return {
+    completions,
+    targetDays,
+    activeHabits,
+    habitConfigHistory: ensureHabitConfigHistoryShape(rawHistory, activeHabits, targetDays),
     quantitySettings: qty,
     rankVisualTheme:
       s.rankVisualTheme === 'valorant' || s.rank_visual_theme === 'valorant' ? 'valorant' : 'lol',
@@ -102,6 +134,7 @@ export function snapshotCloudComparable(s) {
     completions: n.completions,
     targetDays: n.targetDays,
     activeHabits: n.activeHabits,
+    habitConfigHistory: n.habitConfigHistory,
     quantitySettings: n.quantitySettings,
     rankVisualTheme: n.rankVisualTheme,
   }
@@ -116,6 +149,7 @@ export function snapshotToCloudPayload(snapshot) {
     completions: n.completions,
     target_days: n.targetDays,
     active_habits: n.activeHabits,
+    habit_config_history: n.habitConfigHistory,
     quantity_settings: n.quantitySettings,
     rank_visual_theme: n.rankVisualTheme,
     test_rank_override: null,
@@ -132,6 +166,7 @@ export function persistSnapshotToLocal(snapshot) {
   persistCompletions(n.completions)
   persistTargetDays(n.targetDays)
   persistActiveHabits(n.activeHabits)
+  persistHabitConfigHistory(n.habitConfigHistory)
   persistQuantitySettings(n.quantitySettings)
   saveRankVisualTheme(n.rankVisualTheme)
   saveTestRankOverride(n.testRankOverride)

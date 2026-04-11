@@ -1,6 +1,10 @@
 import { habits } from '../data/habits'
 import { getWeekStartKey, getCountForWeekStart, addDaysToDateStr } from './progress'
 import { RANK_LADDER } from '../data/ranks'
+import {
+  resolveHabitConfigAtDate,
+  weeklyTargetFromSelectedDays,
+} from './habitConfigHistory'
 
 /**
  * Rank engine V4 — additive model: totalProgress = sum of interpolated weekly LP from a
@@ -209,28 +213,58 @@ export function progressToRank(progress) {
   return { rank, lp }
 }
 
-function computeWeeklyRatios(dates, habit, targetDaysForHabit) {
-  const history = Array.isArray(dates) ? dates.slice().sort() : []
-  if (history.length === 0) {
+function hasHabitConfigHistory(habitConfigHistory) {
+  return habitConfigHistory && typeof habitConfigHistory === 'object' && Object.keys(habitConfigHistory).length > 0
+}
+
+/**
+ * @param {string[]} dates
+ * @param {{ id: string, name: string, defaultWeeklyTarget: number }} habit
+ * @param {string} habitName
+ * @param {import('./habitConfigHistory').HabitConfigHistory | null | undefined} habitConfigHistory
+ * @param {number[]|undefined} fallbackTargets — current targetDays row (name or id key already resolved by caller)
+ * @param {boolean} fallbackActive — whether habit is in current activeHabits (for resolve fallback / legacy)
+ */
+function computeWeeklyRatios(dates, habit, habitName, habitConfigHistory, fallbackTargets, fallbackActive) {
+  const dateHistory = Array.isArray(dates) ? dates.slice().sort() : []
+  if (dateHistory.length === 0) {
     return { ratios: [], weeksEvaluated: 0 }
   }
 
   const currentWeekStart = getWeekStartKey()
 
-  const firstDateStr = history[0]
+  const firstDateStr = dateHistory[0]
   let weekStart = getWeekStartKey(new Date(firstDateStr + 'T12:00:00'))
 
   const ratios = []
+  const useHistory = hasHabitConfigHistory(habitConfigHistory)
+
   // Include the current Mon–Sun week (partial progress counts toward ratio).
   while (weekStart <= currentWeekStart) {
-    const completed = getCountForWeekStart(history, weekStart)
-    const selectedCount = Array.isArray(targetDaysForHabit)
-      ? targetDaysForHabit.length
-      : 0
-    const weeklyTarget =
-      selectedCount && selectedCount > 0
-        ? selectedCount
-        : Number(habit.defaultWeeklyTarget) || 0
+    let cfg
+    if (useHistory) {
+      cfg = resolveHabitConfigAtDate(
+        habitName,
+        weekStart,
+        habitConfigHistory,
+        habit,
+        fallbackTargets,
+        fallbackActive
+      )
+    } else {
+      cfg = {
+        isActive: true,
+        targetDays: Array.isArray(fallbackTargets) ? fallbackTargets : [],
+      }
+    }
+
+    if (!cfg.isActive) {
+      weekStart = addDaysToDateStr(weekStart, 7)
+      continue
+    }
+
+    const completed = getCountForWeekStart(dateHistory, weekStart)
+    const weeklyTarget = weeklyTargetFromSelectedDays(cfg.targetDays, habit)
 
     if (weeklyTarget > 0) {
       const ratio = clamp01((Number(completed) || 0) / weeklyTarget)
@@ -243,7 +277,10 @@ function computeWeeklyRatios(dates, habit, targetDaysForHabit) {
   return { ratios, weeksEvaluated: ratios.length }
 }
 
-export function deriveRanksV4(completions, targetDays, activeHabits) {
+/**
+ * @param {import('./habitConfigHistory').HabitConfigHistory | null | undefined} [habitConfigHistory] — when null/empty, legacy: current targets apply to all weeks for active habits.
+ */
+export function deriveRanksV4(completions, targetDays, activeHabits, habitConfigHistory) {
   const result = {}
   const activeKeys = new Set(activeHabits ?? [])
 
@@ -265,10 +302,15 @@ export function deriveRanksV4(completions, targetDays, activeHabits) {
         ? targetById
         : targetByName
 
+    const fallbackActive = activeKeys.has(habit.name) || activeKeys.has(key)
+
     const { ratios, weeksEvaluated } = computeWeeklyRatios(
       dates,
       habit,
-      targets
+      habit.name,
+      habitConfigHistory,
+      targets,
+      fallbackActive
     )
     if (weeksEvaluated === 0) {
       result[key] = {

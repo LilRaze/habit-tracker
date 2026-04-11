@@ -8,6 +8,7 @@ function Rank({
   completions,
   targetDays,
   activeHabits,
+  habitConfigHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
@@ -22,6 +23,7 @@ function Rank({
           completions={completions}
           targetDays={targetDays}
           activeHabits={activeHabits}
+          habitConfigHistory={habitConfigHistory}
           testRankOverride={testRankOverride}
           rankVisualTheme={rankVisualTheme}
           timeOffsetTick={timeOffsetTick}
@@ -42,6 +44,7 @@ function Rank({
         completions={completions}
         targetDays={targetDays}
         activeHabits={activeHabits}
+        habitConfigHistory={habitConfigHistory}
         testRankOverride={testRankOverride}
         rankVisualTheme={rankVisualTheme}
         timeOffsetTick={timeOffsetTick}
