@@ -17,6 +17,7 @@ export const HABIT_TO_STAT_KEYS = {
   'No alcohol': ['health', 'discipline'],
   Shower: ['health', 'discipline'],
   'Dental care': ['health', 'discipline'],
+  'Tooth pick use': ['health', 'discipline'],
 
   // Discipline + Health
   'Cold shower': ['discipline', 'health'],
@@ -31,6 +32,7 @@ export const HABIT_TO_STAT_KEYS = {
   Meditation: ['intelligence', 'discipline'],
   Journaling: ['intelligence', 'discipline'],
   Reflection: ['intelligence', 'discipline'],
+  'Gratitude practice': ['intelligence', 'discipline'],
   'No phone': ['intelligence', 'discipline'],
   'No social media': ['intelligence', 'discipline'],
   'Help someone': ['intelligence', 'discipline'],

@@ -403,6 +403,20 @@
   margin: 0 0 10px;
 }
 
+.settings-scenario-unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-scenario-unlock-form .settings-test-row {
+  margin-bottom: 0;
+}
+
+.settings-scenario-unlock-btn {
+  margin-top: 0;
+}
+
 .settings-test-row {
   display: flex;
   align-items: center;

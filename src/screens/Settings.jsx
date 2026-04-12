@@ -366,105 +366,105 @@ function Settings({
       </header>
 
       <div className="settings-primary-stack">
-      <section className="settings-section settings-section-account">
-        <h2 className="settings-section-title">Account</h2>
-        {!isConfigured ? (
-          <div className="settings-account-row settings-account-row--muted">
-            <CloudOff size={16} strokeWidth={2} aria-hidden />
-            <span>Sign-in unavailable (configure Supabase).</span>
-          </div>
-        ) : authLoading ? (
-          <div className="settings-account-row">
-            <Loader2 size={18} strokeWidth={2} className="settings-account-spin" aria-hidden />
-            <span>Loading session…</span>
-          </div>
-        ) : !user ? (
-          <button type="button" className="settings-account-btn settings-account-btn--primary" onClick={() => signInWithGoogle()}>
-            <LogIn size={16} strokeWidth={2} aria-hidden />
-            <span>Continue with Google</span>
-          </button>
-        ) : (
-          <div className="settings-account-block">
-            <div className="settings-account-field">
-              <span className="settings-account-label">Email</span>
-              <span className="settings-account-value" title={user.email ?? ''}>
-                {user.email ?? '—'}
-              </span>
+        <section className="settings-section settings-section-rank">
+          <h2 className="settings-section-title">Rank display</h2>
+          <p className="settings-test-hint">Visual theme only — rank progression and LP are unchanged.</p>
+          <label className="settings-test-row">
+            <span>Rank visuals</span>
+            <select
+              className="settings-test-input"
+              value={rankVisualTheme}
+              onChange={(e) =>
+                onRankVisualThemeChange?.(e.target.value === 'valorant' ? 'valorant' : 'lol')
+              }
+            >
+              <option value="lol">League of Legends</option>
+              <option value="valorant">Valorant</option>
+            </select>
+          </label>
+        </section>
+
+        <FriendsPanel />
+
+        <section className="settings-section settings-section-account">
+          <h2 className="settings-section-title">Account</h2>
+          {!isConfigured ? (
+            <div className="settings-account-row settings-account-row--muted">
+              <CloudOff size={16} strokeWidth={2} aria-hidden />
+              <span>Sign-in unavailable (configure Supabase).</span>
             </div>
-            <div className="settings-account-field">
-              <span className="settings-account-label">Username</span>
-              {profileStatus === 'loading' ? (
-                <span className="settings-account-row">
-                  <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
-                  Loading…
+          ) : authLoading ? (
+            <div className="settings-account-row">
+              <Loader2 size={18} strokeWidth={2} className="settings-account-spin" aria-hidden />
+              <span>Loading session…</span>
+            </div>
+          ) : !user ? (
+            <button type="button" className="settings-account-btn settings-account-btn--primary" onClick={() => signInWithGoogle()}>
+              <LogIn size={16} strokeWidth={2} aria-hidden />
+              <span>Continue with Google</span>
+            </button>
+          ) : (
+            <div className="settings-account-block">
+              <div className="settings-account-field">
+                <span className="settings-account-label">Email</span>
+                <span className="settings-account-value" title={user.email ?? ''}>
+                  {user.email ?? '—'}
                 </span>
-              ) : (
-                <span className="settings-account-value">{displayUsername ?? 'Not set'}</span>
-              )}
-            </div>
-            {profileLoadError ? (
-              <div className="settings-account-alert">
-                <AlertCircle size={16} strokeWidth={2} aria-hidden />
-                <span>{profileLoadError}</span>
-                <button type="button" className="settings-account-link" onClick={() => void refreshProfile()}>
-                  Retry
+              </div>
+              <div className="settings-account-field">
+                <span className="settings-account-label">Username</span>
+                {profileStatus === 'loading' ? (
+                  <span className="settings-account-row">
+                    <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                    Loading…
+                  </span>
+                ) : (
+                  <span className="settings-account-value">{displayUsername ?? 'Not set'}</span>
+                )}
+              </div>
+              {profileLoadError ? (
+                <div className="settings-account-alert">
+                  <AlertCircle size={16} strokeWidth={2} aria-hidden />
+                  <span>{profileLoadError}</span>
+                  <button type="button" className="settings-account-link" onClick={() => void refreshProfile()}>
+                    Retry
+                  </button>
+                </div>
+              ) : null}
+              <div className="settings-account-row settings-account-sync">
+                <Cloud size={16} strokeWidth={2} aria-hidden />
+                <span className={cloudStatus === 'error' ? 'settings-account-sync--error' : ''}>
+                  {cloudStatusLabel(cloudStatus)}
+                </span>
+                {lastCloudError ? (
+                  <span className="settings-account-sync-error" title={lastCloudError}>
+                    ⚠
+                  </span>
+                ) : null}
+              </div>
+              <div className="settings-account-actions">
+                <button type="button" className="settings-account-btn" onClick={() => setUsernameEditOpen(true)} disabled={profileStatus === 'loading'}>
+                  Change username
+                </button>
+                <button type="button" className="settings-account-btn" onClick={() => void handleSignOut()}>
+                  <LogOut size={16} strokeWidth={2} aria-hidden />
+                  <span>Sign out</span>
                 </button>
               </div>
-            ) : null}
-            <div className="settings-account-row settings-account-sync">
-              <Cloud size={16} strokeWidth={2} aria-hidden />
-              <span className={cloudStatus === 'error' ? 'settings-account-sync--error' : ''}>
-                {cloudStatusLabel(cloudStatus)}
-              </span>
-              {lastCloudError ? (
-                <span className="settings-account-sync-error" title={lastCloudError}>
-                  ⚠
-                </span>
-              ) : null}
             </div>
-            <div className="settings-account-actions">
-              <button type="button" className="settings-account-btn" onClick={() => setUsernameEditOpen(true)} disabled={profileStatus === 'loading'}>
-                Change username
-              </button>
-              <button type="button" className="settings-account-btn" onClick={() => void handleSignOut()}>
-                <LogOut size={16} strokeWidth={2} aria-hidden />
-                <span>Sign out</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
 
-      <UsernameModal
-        open={usernameEditOpen}
-        title="Change username"
-        initialValue={displayUsername ?? ''}
-        submitLabel="Save"
-        forceOpen={false}
-        onSubmit={handleSaveUsernameEdit}
-        onClose={() => setUsernameEditOpen(false)}
-      />
-
-      <FriendsPanel />
+        <UsernameModal
+          open={usernameEditOpen}
+          title="Change username"
+          initialValue={displayUsername ?? ''}
+          submitLabel="Save"
+          forceOpen={false}
+          onSubmit={handleSaveUsernameEdit}
+          onClose={() => setUsernameEditOpen(false)}
+        />
       </div>
-
-      <section className="settings-section settings-section-rank">
-        <h2 className="settings-section-title">Rank display</h2>
-        <p className="settings-test-hint">Visual theme only — rank progression and LP are unchanged.</p>
-        <label className="settings-test-row">
-          <span>Rank visuals</span>
-          <select
-            className="settings-test-input"
-            value={rankVisualTheme}
-            onChange={(e) =>
-              onRankVisualThemeChange?.(e.target.value === 'valorant' ? 'valorant' : 'lol')
-            }
-          >
-            <option value="lol">League of Legends</option>
-            <option value="valorant">Valorant</option>
-          </select>
-        </label>
-      </section>
 
       <section className="settings-section settings-section-data">
         <h2 className="settings-section-title">Data</h2>
@@ -483,7 +483,7 @@ function Settings({
         {!scenarioUnlocked && (
           <div className="settings-test-block">
             <h3 className="settings-test-heading">Scenario access</h3>
-            <form className="settings-test-row" onSubmit={handleScenarioUnlock}>
+            <form className="settings-scenario-unlock-form" onSubmit={handleScenarioUnlock}>
               <label className="settings-test-row">
                 <span>Password</span>
                 <input
@@ -493,7 +493,7 @@ function Settings({
                   onChange={(e) => setScenarioPassword(e.target.value)}
                 />
               </label>
-              <button type="submit" className="settings-test-btn">
+              <button type="submit" className="settings-test-btn settings-scenario-unlock-btn">
                 Unlock scenarios
               </button>
             </form>

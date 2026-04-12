@@ -78,20 +78,14 @@ function Targets({
   const inactiveHabitList = habits.filter((habit) => !activeSet.has(habit.name))
 
   const prevActiveRef = useRef(activeHabits)
+  const bottomAnchorRef = useRef(null)
 
   useLayoutEffect(() => {
     const prev = prevActiveRef.current ?? []
     const curr = activeHabits ?? []
     prevActiveRef.current = curr
     if (!Array.isArray(prev) || !Array.isArray(curr) || curr.length <= prev.length) return
-    const prevSet = new Set(prev)
-    const added = curr.filter((name) => !prevSet.has(name))
-    const lastAdded = added.length ? added[added.length - 1] : null
-    if (!lastAdded) return
-    const habitMeta = habits.find((h) => h.name === lastAdded)
-    const anchorId = habitMeta ? `targets-habit-card-${habitMeta.id}` : null
-    const el = anchorId ? document.getElementById(anchorId) : null
-    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    bottomAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [activeHabits])
 
   return (
@@ -180,6 +174,8 @@ function Targets({
           </div>
         </section>
       ) : null}
+
+      <div ref={bottomAnchorRef} className="targets-scroll-anchor" aria-hidden />
     </div>
   )
 }

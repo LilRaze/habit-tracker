@@ -1,5 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { App } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
+import { consumeSupabaseOAuthCallback, getOAuthRedirectTo } from '../utils/oauthDeepLink'
 
 const AuthContext = createContext(null)
 
@@ -35,9 +38,36 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!supabase || !Capacitor.isNativePlatform()) return undefined
+
+    let listener
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const launch = await App.getLaunchUrl()
+        if (!cancelled && launch?.url) {
+          await consumeSupabaseOAuthCallback(supabase, launch.url)
+        }
+        if (cancelled) return
+        listener = await App.addListener('appUrlOpen', ({ url }) => {
+          void consumeSupabaseOAuthCallback(supabase, url)
+        })
+      } catch (e) {
+        console.warn('OAuth deep link listener failed', e)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      listener?.remove()
+    }
+  }, [])
+
   const signInWithGoogle = async () => {
     if (!supabase) return { error: new Error('Supabase not configured') }
-    const redirectTo = `${window.location.origin}/`
+    const redirectTo = getOAuthRedirectTo()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

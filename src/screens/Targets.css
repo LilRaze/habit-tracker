@@ -4,6 +4,13 @@
   gap: 16px;
 }
 
+.targets-scroll-anchor {
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
 .targets-picker {
   margin-top: 18px;
 }
