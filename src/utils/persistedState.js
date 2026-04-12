@@ -8,13 +8,14 @@ import {
   STORAGE_TARGET_DAYS,
   STORAGE_ACTIVE_HABITS,
   STORAGE_HABIT_CONFIG_HISTORY,
+  STORAGE_HABIT_TARGET_HISTORY,
   STORAGE_QUANTITY_SETTINGS,
 } from './storageKeys'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import {
   migrateActiveHabits,
   migrateCompletions,
-  migrateHabitConfigHistoryKeys,
+  migrateHabitTargetHistoryKeys,
   migrateQuantitySettings,
   migrateTargetDays,
 } from './habitNameMigration'
@@ -97,22 +98,31 @@ export function loadActiveHabits() {
   }
 }
 
+/** Legacy field; rank ignores contents — always empty for app logic. */
+export function loadHabitConfigHistory() {
+  return {}
+}
+
+export function persistHabitConfigHistory() {
+  localStorage.setItem(STORAGE_HABIT_CONFIG_HISTORY, JSON.stringify({}))
+}
+
 /**
- * Load + migrate habit config history using current active habits and target days from storage.
+ * @param {Record<string, number[]>} targetDays
  */
-export function loadHabitConfigHistory(activeHabits, targetDays) {
+export function loadHabitTargetHistory(targetDays) {
   let raw = null
   try {
-    const stored = localStorage.getItem(STORAGE_HABIT_CONFIG_HISTORY)
-    if (stored) raw = migrateHabitConfigHistoryKeys(JSON.parse(stored))
+    const stored = localStorage.getItem(STORAGE_HABIT_TARGET_HISTORY)
+    if (stored) raw = migrateHabitTargetHistoryKeys(JSON.parse(stored))
   } catch {
     raw = null
   }
-  return ensureHabitConfigHistoryShape(raw, activeHabits, targetDays)
+  return ensureHabitTargetHistoryShape(raw, targetDays)
 }
 
-export function persistHabitConfigHistory(habitConfigHistory) {
-  localStorage.setItem(STORAGE_HABIT_CONFIG_HISTORY, JSON.stringify(habitConfigHistory))
+export function persistHabitTargetHistory(habitTargetHistory) {
+  localStorage.setItem(STORAGE_HABIT_TARGET_HISTORY, JSON.stringify(habitTargetHistory))
 }
 
 export function getInitialQuantitySettings() {

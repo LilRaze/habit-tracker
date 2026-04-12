@@ -24,8 +24,8 @@ for (let i = 0; i < 40; i += 1) {
       totalWeeks: w,
       seed,
     })
-    const a = deriveRanksV4(completions, targetDays, activeHabits)
-    const b = deriveRanksV4Sim(completions, targetDays, activeHabits)
+    const a = deriveRanksV4(completions, targetDays, activeHabits, undefined)
+    const b = deriveRanksV4Sim(completions, targetDays, activeHabits, undefined)
     if (JSON.stringify(a) !== JSON.stringify(b)) {
       // eslint-disable-next-line no-console
       console.error('Rank mismatch', { i, w, seed, archetype: archetype.id, profile: profile.id })

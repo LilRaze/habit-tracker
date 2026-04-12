@@ -20,7 +20,7 @@ export default function SocialFriendRankDetail({ friend, rankVisualTheme, onBack
     )
   }
 
-  const { completions, targetDays, activeHabits, habitConfigHistory } = friend.rankSnapshot
+  const { completions, targetDays, activeHabits, habitTargetHistory } = friend.rankSnapshot
   const testRankOverride =
     friend.testRankOverride && typeof friend.testRankOverride === 'object' ? friend.testRankOverride : null
 
@@ -36,7 +36,7 @@ export default function SocialFriendRankDetail({ friend, rankVisualTheme, onBack
         completions={completions}
         targetDays={targetDays}
         activeHabits={activeHabits}
-        habitConfigHistory={habitConfigHistory}
+        habitTargetHistory={habitTargetHistory}
         testRankOverride={testRankOverride}
         rankVisualTheme={rankVisualTheme}
         timeOffsetTick={0}

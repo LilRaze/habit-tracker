@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { getTodayDateString, getTimeOffsetMonths, getTimeOffsetDays } from '../utils/now'
 import { LogIn, LogOut, Loader2, Cloud, CloudOff, AlertCircle } from 'lucide-react'
 import { habits } from '../data/habits'
 import {
@@ -242,12 +243,18 @@ function Settings({
   onResetAllProgress,
   onApplySimulation,
   onApplyTestRank,
+  timeOffsetTick = 0,
+  onShiftVirtualTodayByDays,
+  onClearVirtualDayOffset,
   rankVisualTheme = 'lol',
   onRankVisualThemeChange,
   cloudStatus = 'idle',
   lastCloudError,
   onAfterSignOut,
 }) {
+  const virtualTodayLabel = useMemo(() => getTodayDateString(), [timeOffsetTick])
+  const virtualMonthOffset = useMemo(() => getTimeOffsetMonths(), [timeOffsetTick])
+  const virtualDayOffset = useMemo(() => getTimeOffsetDays(), [timeOffsetTick])
   const { user, loading: authLoading, signInWithGoogle, signOut, isConfigured } = useAuth()
   const { profile, status: profileStatus, loadError: profileLoadError, refreshProfile, saveUsername } = useProfile()
   const [usernameEditOpen, setUsernameEditOpen] = useState(false)
@@ -534,6 +541,38 @@ function Settings({
                   ))}
                 </select>
               </label>
+            </div>
+
+            <div className="settings-test-block">
+              <h3 className="settings-test-heading">Virtual calendar (dev)</h3>
+              <p className="settings-test-hint">
+                Shifts the app&apos;s &quot;today&quot; for logging, week boundaries, rank, and target-history
+                scheduling. Local only; not synced. Use +7 days to jump to next week without waiting.
+              </p>
+              <p className="settings-test-hint">
+                <strong>Virtual today:</strong> {virtualTodayLabel}
+                <br />
+                <span>
+                  Offsets — months: {virtualMonthOffset}, days: {virtualDayOffset}
+                </span>
+              </p>
+              <div className="settings-test-preset-row">
+                <button
+                  type="button"
+                  className="settings-test-btn"
+                  onClick={() => onShiftVirtualTodayByDays?.(7)}
+                >
+                  +7 days
+                </button>
+                <button
+                  type="button"
+                  className="settings-test-btn"
+                  onClick={() => onClearVirtualDayOffset?.()}
+                  disabled={virtualDayOffset === 0}
+                >
+                  Clear day offset
+                </button>
+              </div>
             </div>
 
             <div className="settings-test-block">

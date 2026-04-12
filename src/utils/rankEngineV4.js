@@ -1,10 +1,8 @@
 import { habits } from '../data/habits'
 import { getWeekStartKey, getCountForWeekStart, addDaysToDateStr } from './progress'
 import { RANK_LADDER } from '../data/ranks'
-import {
-  resolveHabitConfigAtDate,
-  weeklyTargetFromSelectedDays,
-} from './habitConfigHistory'
+import { weeklyTargetFromSelectedDays } from './habitConfigHistory'
+import { resolveTargetDaysForWeekStart } from './habitTargetHistory'
 
 /**
  * Rank engine V4 — additive model: totalProgress = sum of interpolated weekly LP from a
@@ -202,73 +200,71 @@ export function interpolateWeeklyGain(consistency, weekNumber) {
 
   const gLo = ROW_WEEKLY_GAINS[rowLo][w] || 0
   const gHi = ROW_WEEKLY_GAINS[rowHi][w] || 0
-  return lerp(gLo, gHi, tC)
+  let gain = lerp(gLo, gHi, tC)
+  // Low consistency rows use matrix labels that stay "Unranked" for many early weeks, so the
+  // spline's cumulative progress is flat and the discrete per-week gain is 0. Users with
+  // realistic partial weeks (e.g. 1/3 completions vs a 3-day target) then earn no LP. When the
+  // interpolated gain is zero but consistency is positive, scale from the 50% row's gain for
+  // this week (same timestep as the matrix) and cap by the perfect-week gain — never exceed
+  // a full-completion week at the same week index.
+  if (c > 0 && gain === 0) {
+    const topRow = ROW_WEEKLY_GAINS.length - 1
+    const gMax = ROW_WEEKLY_GAINS[topRow][w] || 0
+    const idxHalf = MATRIX_CONSISTENCIES.indexOf(0.5)
+    const gHalf = idxHalf >= 0 ? ROW_WEEKLY_GAINS[idxHalf][w] || 0 : 0
+    const ref = gHalf > 0 ? gHalf : gMax * 0.12
+    gain = Math.min((c / 0.5) * ref, gMax)
+  }
+  return gain
 }
 
 export function progressToRank(progress) {
   const p = Math.max(0, progress)
   const index = Math.min(RANK_LADDER.length - 1, Math.floor(p / 100))
   const rank = RANK_LADDER[index]
-  const lp = index >= RANK_LADDER.length - 1 ? 99 : Math.round(p - index * 100)
+  if (index >= RANK_LADDER.length - 1) {
+    return { rank, lp: 99 }
+  }
+  const within = p - index * 100
+  // 0–99 LP within a tier; cap so values like 99.9 don't display as 100 LP before the next tier.
+  const lp = Math.min(99, Math.max(0, Math.round(within)))
   return { rank, lp }
 }
 
-function hasHabitConfigHistory(habitConfigHistory) {
-  return habitConfigHistory && typeof habitConfigHistory === 'object' && Object.keys(habitConfigHistory).length > 0
-}
-
 /**
+ * Weekly ratios: `habitTargetHistory` selects `targetDays` per week (Mon start); fallback = current row.
+ *
  * @param {string[]} dates
  * @param {{ id: string, name: string, defaultWeeklyTarget: number }} habit
- * @param {string} habitName
- * @param {import('./habitConfigHistory').HabitConfigHistory | null | undefined} habitConfigHistory
- * @param {number[]|undefined} fallbackTargets — current targetDays row (name or id key already resolved by caller)
- * @param {boolean} fallbackActive — whether habit is in current activeHabits (for resolve fallback / legacy)
+ * @param {string} habitName — canonical habit name for history lookup
+ * @param {import('./habitTargetHistory').HabitTargetHistory | null | undefined} habitTargetHistory
+ * @param {number[]|undefined} fallbackTargets — current targetDays row (name or id key resolved by caller)
  */
-function computeWeeklyRatios(dates, habit, habitName, habitConfigHistory, fallbackTargets, fallbackActive) {
+function computeWeeklyRatios(dates, habit, habitName, habitTargetHistory, fallbackTargets) {
   const dateHistory = Array.isArray(dates) ? dates.slice().sort() : []
   if (dateHistory.length === 0) {
     return { ratios: [], weeksEvaluated: 0 }
   }
 
   const currentWeekStart = getWeekStartKey()
-
-  const firstDateStr = dateHistory[0]
-  let weekStart = getWeekStartKey(new Date(firstDateStr + 'T12:00:00'))
+  const firstWeek = getWeekStartKey(new Date(dateHistory[0] + 'T12:00:00'))
+  // Always include the Mon–Sun week containing "today" (partial progress counts). If the
+  // earliest completion falls in a week after the current one (virtual time / odd data),
+  // extend through that week so nothing is dropped and the in-progress week still scores.
+  const endWeek = firstWeek > currentWeekStart ? firstWeek : currentWeekStart
+  let weekStart = firstWeek <= currentWeekStart ? firstWeek : currentWeekStart
 
   const ratios = []
-  const useHistory = hasHabitConfigHistory(habitConfigHistory)
 
-  // Include the current Mon–Sun week (partial progress counts toward ratio).
-  while (weekStart <= currentWeekStart) {
-    // Config must be resolved with a date *inside* this week. Using Monday alone breaks
-    // mid-week activations/target changes: a segment effective Tue is not <= Mon, so the
-    // epoch (often inactive after reset) stays chosen and the whole week is skipped.
-    const configDateStr = addDaysToDateStr(weekStart, 6)
-    let cfg
-    if (useHistory) {
-      cfg = resolveHabitConfigAtDate(
-        habitName,
-        configDateStr,
-        habitConfigHistory,
-        habit,
-        fallbackTargets,
-        fallbackActive
-      )
-    } else {
-      cfg = {
-        isActive: true,
-        targetDays: Array.isArray(fallbackTargets) ? fallbackTargets : [],
-      }
-    }
-
-    if (!cfg.isActive) {
-      weekStart = addDaysToDateStr(weekStart, 7)
-      continue
-    }
-
+  while (weekStart <= endWeek) {
     const completed = getCountForWeekStart(dateHistory, weekStart)
-    const weeklyTarget = weeklyTargetFromSelectedDays(cfg.targetDays, habit)
+    const targetsForWeek = resolveTargetDaysForWeekStart(
+      habitName,
+      weekStart,
+      habitTargetHistory,
+      fallbackTargets
+    )
+    const weeklyTarget = weeklyTargetFromSelectedDays(targetsForWeek, habit)
 
     if (weeklyTarget > 0) {
       const ratio = clamp01((Number(completed) || 0) / weeklyTarget)
@@ -282,9 +278,12 @@ function computeWeeklyRatios(dates, habit, habitName, habitConfigHistory, fallba
 }
 
 /**
- * @param {import('./habitConfigHistory').HabitConfigHistory | null | undefined} [habitConfigHistory] — when null/empty, legacy: current targets apply to all weeks for active habits.
+ * @param {Record<string, string[]|undefined>} completions
+ * @param {Record<string, number[]|undefined>} targetDays
+ * @param {string[]} activeHabits
+ * @param {import('./habitTargetHistory').HabitTargetHistory | null | undefined} [habitTargetHistory]
  */
-export function deriveRanksV4(completions, targetDays, activeHabits, habitConfigHistory) {
+export function deriveRanksV4(completions, targetDays, activeHabits, habitTargetHistory) {
   const result = {}
   const activeKeys = new Set(activeHabits ?? [])
 
@@ -306,15 +305,12 @@ export function deriveRanksV4(completions, targetDays, activeHabits, habitConfig
         ? targetById
         : targetByName
 
-    const fallbackActive = activeKeys.has(habit.name) || activeKeys.has(key)
-
     const { ratios, weeksEvaluated } = computeWeeklyRatios(
       dates,
       habit,
       habit.name,
-      habitConfigHistory,
-      targets,
-      fallbackActive
+      habitTargetHistory,
+      targets
     )
     if (weeksEvaluated === 0) {
       result[key] = {
@@ -355,12 +351,11 @@ export function deriveRanksV4(completions, targetDays, activeHabits, habitConfig
     }
   }
 
-  const avgProgress = Math.round(
+  const rawAvg =
     entries.reduce((sum, h) => sum + (h.progressValue || 0), 0) / entries.length
-  )
   const overall = {
-    ...progressToRank(avgProgress),
-    progressValue: avgProgress,
+    ...progressToRank(rawAvg),
+    progressValue: Math.round(rawAvg),
   }
 
   return {

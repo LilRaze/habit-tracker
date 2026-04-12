@@ -15,7 +15,7 @@ function mergeOverallRows(
   completions,
   targetDays,
   activeHabits,
-  habitConfigHistory,
+  habitTargetHistory,
   testRankOverride
 ) {
   if (!user?.id) return []
@@ -30,7 +30,7 @@ function mergeOverallRows(
     completions,
     targetDays,
     activeHabits,
-    habitConfigHistory,
+    habitTargetHistory,
     testRankOverride
   )
   if (!selfEntry) return []
@@ -48,7 +48,7 @@ export default function FriendsRankLeaderboard({
   completions,
   targetDays,
   activeHabits,
-  habitConfigHistory,
+  habitTargetHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
@@ -72,7 +72,7 @@ export default function FriendsRankLeaderboard({
         completions,
         targetDays,
         activeHabits,
-        habitConfigHistory,
+        habitTargetHistory,
         testRankOverride
       ),
     [
@@ -83,7 +83,7 @@ export default function FriendsRankLeaderboard({
       completions,
       targetDays,
       activeHabits,
-      habitConfigHistory,
+      habitTargetHistory,
       testRankOverride,
       timeOffsetTick,
     ]

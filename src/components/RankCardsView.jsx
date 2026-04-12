@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { deriveRanksV4 } from '../utils/rankEngineV4'
+import { ensureHabitTargetHistoryShape } from '../utils/habitTargetHistory'
 import { buildRankDisplayView } from '../utils/rankDisplayPresentation'
 import '../screens/Rank.css'
 
@@ -9,7 +10,7 @@ import '../screens/Rank.css'
  * @param {Record<string, string[]>} props.completions
  * @param {Record<string, number[]>} props.targetDays
  * @param {string[]} props.activeHabits
- * @param {import('../utils/habitConfigHistory').HabitConfigHistory} [props.habitConfigHistory]
+ * @param {Record<string, { effectiveFrom: string, targetDays: number[] }[]>} [props.habitTargetHistory]
  * @param {import('../utils/testRankOverride').TestRankOverride | null} [props.testRankOverride]
  * @param {'lol'|'valorant'} [props.rankVisualTheme]
  * @param {number} [props.timeOffsetTick]
@@ -18,26 +19,32 @@ export default function RankCardsView({
   completions,
   targetDays,
   activeHabits,
-  habitConfigHistory,
+  habitTargetHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
 }) {
   const rankData = useMemo(
     () =>
-      deriveRanksV4(completions ?? {}, targetDays ?? {}, activeHabits ?? [], habitConfigHistory ?? null),
-    [completions, targetDays, activeHabits, habitConfigHistory, timeOffsetTick]
+      deriveRanksV4(
+        completions ?? {},
+        targetDays ?? {},
+        activeHabits ?? [],
+        ensureHabitTargetHistoryShape(habitTargetHistory ?? null, targetDays ?? {})
+      ),
+    [completions, targetDays, activeHabits, habitTargetHistory, timeOffsetTick]
   )
 
   const activeSet = new Set(activeHabits ?? [])
   const visibleHabits = rankData.habits.filter((h) => activeSet.has(h.habitName) || activeSet.has(h.habitId))
 
-  const overallForDisplay = useMemo(() => {
-    if (testRankOverride?.rank) {
-      return { rank: testRankOverride.rank, lp: testRankOverride.lp }
-    }
-    return { rank: rankData.overall.rank, lp: rankData.overall.lp }
-  }, [testRankOverride, rankData.overall.rank, rankData.overall.lp])
+  // Always show live overall rank + LP from the engine. Settings "test rank" is for
+  // helmet/visual edge cases (apexDivision); replacing rank+lp here froze the UI and hid
+  // real LP progression while override was set.
+  const overallForDisplay = useMemo(
+    () => ({ rank: rankData.overall.rank, lp: rankData.overall.lp }),
+    [rankData.overall.rank, rankData.overall.lp]
+  )
 
   const overallView = useMemo(
     () =>

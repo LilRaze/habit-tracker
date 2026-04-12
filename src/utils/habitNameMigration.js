@@ -1,6 +1,6 @@
 /**
  * One-time display rename: canonical habit `name` in habits.js is the storage key everywhere
- * (completions, targetDays, activeHabits, quantitySettings, habitConfigHistory, cloud JSON).
+ * (completions, targetDays, activeHabits, quantitySettings, habitConfigHistory, habitTargetHistory, cloud JSON).
  * This module rewrites legacy keys so existing data survives when `name` changes.
  */
 const LEGACY_TO_CANONICAL = {
@@ -113,8 +113,30 @@ export function migrateHabitConfigHistoryKeys(habitConfigHistory) {
 }
 
 /**
+ * @param {Record<string, unknown[]>|null|undefined} habitTargetHistory
+ */
+export function migrateHabitTargetHistoryKeys(habitTargetHistory) {
+  if (!habitTargetHistory || typeof habitTargetHistory !== 'object') return habitTargetHistory
+  const out = { ...habitTargetHistory }
+  for (const [oldKey, newKey] of Object.entries(LEGACY_TO_CANONICAL)) {
+    if (!(oldKey in out)) continue
+    const oldList = Array.isArray(out[oldKey]) ? out[oldKey] : []
+    const newList = Array.isArray(out[newKey]) ? out[newKey] : []
+    if (newList.length === 0) {
+      out[newKey] = oldList
+    } else if (oldList.length > 0) {
+      out[newKey] = [...oldList, ...newList].sort((a, b) =>
+        String(a.effectiveFrom).localeCompare(String(b.effectiveFrom))
+      )
+    }
+    delete out[oldKey]
+  }
+  return out
+}
+
+/**
  * Migrate all habit-keyed snapshot fields (camelCase).
- * @param {Partial<{ completions: object, targetDays: object, activeHabits: string[], quantitySettings: object, habitConfigHistory: object }>} snap
+ * @param {Partial<{ completions: object, targetDays: object, activeHabits: string[], quantitySettings: object, habitConfigHistory: object, habitTargetHistory: object }>} snap
  */
 export function migrateSnapshotHabitKeys(snap) {
   if (!snap || typeof snap !== 'object') return snap
@@ -129,5 +151,9 @@ export function migrateSnapshotHabitKeys(snap) {
       snap.habitConfigHistory != null
         ? migrateHabitConfigHistoryKeys(snap.habitConfigHistory)
         : snap.habitConfigHistory,
+    habitTargetHistory:
+      snap.habitTargetHistory != null
+        ? migrateHabitTargetHistoryKeys(snap.habitTargetHistory)
+        : snap.habitTargetHistory,
   }
 }

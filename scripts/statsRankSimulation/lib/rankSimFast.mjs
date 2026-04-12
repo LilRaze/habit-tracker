@@ -7,10 +7,8 @@ import {
   interpolateWeeklyGain,
   progressToRank,
 } from '../../../src/utils/rankEngineV4.js'
-import {
-  resolveHabitConfigAtDate,
-  weeklyTargetFromSelectedDays,
-} from '../../../src/utils/habitConfigHistory.js'
+import { weeklyTargetFromSelectedDays } from '../../../src/utils/habitConfigHistory.js'
+import { resolveTargetDaysForWeekStart } from '../../../src/utils/habitTargetHistory.js'
 import { addDaysToDateStr, getWeekStartKey } from '../../../src/utils/progress.js'
 
 function clamp01(x) {
@@ -20,18 +18,7 @@ function clamp01(x) {
   return x
 }
 
-function hasHabitConfigHistory(habitConfigHistory) {
-  return habitConfigHistory && typeof habitConfigHistory === 'object' && Object.keys(habitConfigHistory).length > 0
-}
-
-function computeWeeklyRatiosBucketed(
-  dates,
-  habit,
-  habitName,
-  habitConfigHistory,
-  fallbackTargets,
-  fallbackActive
-) {
+function computeWeeklyRatiosBucketed(dates, habit, habitName, habitTargetHistory, fallbackTargets) {
   const dateHistory = Array.isArray(dates) ? dates.slice().sort() : []
   if (dateHistory.length === 0) {
     return { ratios: [], weeksEvaluated: 0 }
@@ -44,37 +31,21 @@ function computeWeeklyRatiosBucketed(
   })
 
   const currentWeekStart = getWeekStartKey()
-  const firstDateStr = dateHistory[0]
-  let weekStart = getWeekStartKey(new Date(firstDateStr + 'T12:00:00'))
+  const firstWeek = getWeekStartKey(new Date(dateHistory[0] + 'T12:00:00'))
+  const endWeek = firstWeek > currentWeekStart ? firstWeek : currentWeekStart
+  let weekStart = firstWeek <= currentWeekStart ? firstWeek : currentWeekStart
 
   const ratios = []
-  const useHistory = hasHabitConfigHistory(habitConfigHistory)
 
-  while (weekStart <= currentWeekStart) {
-    let cfg
-    if (useHistory) {
-      cfg = resolveHabitConfigAtDate(
-        habitName,
-        weekStart,
-        habitConfigHistory,
-        habit,
-        fallbackTargets,
-        fallbackActive
-      )
-    } else {
-      cfg = {
-        isActive: true,
-        targetDays: Array.isArray(fallbackTargets) ? fallbackTargets : [],
-      }
-    }
-
-    if (!cfg.isActive) {
-      weekStart = addDaysToDateStr(weekStart, 7)
-      continue
-    }
-
+  while (weekStart <= endWeek) {
     const completed = bucket.get(weekStart) || 0
-    const weeklyTarget = weeklyTargetFromSelectedDays(cfg.targetDays, habit)
+    const targetsForWeek = resolveTargetDaysForWeekStart(
+      habitName,
+      weekStart,
+      habitTargetHistory,
+      fallbackTargets
+    )
+    const weeklyTarget = weeklyTargetFromSelectedDays(targetsForWeek, habit)
 
     if (weeklyTarget > 0) {
       const ratio = clamp01((Number(completed) || 0) / weeklyTarget)
@@ -88,7 +59,7 @@ function computeWeeklyRatiosBucketed(
 }
 
 /** Drop-in replacement for deriveRanksV4 with identical return shape. */
-export function deriveRanksV4Sim(completions, targetDays, activeHabits, habitConfigHistory) {
+export function deriveRanksV4Sim(completions, targetDays, activeHabits, habitTargetHistory) {
   const result = {}
   const activeKeys = new Set(activeHabits ?? [])
 
@@ -110,15 +81,12 @@ export function deriveRanksV4Sim(completions, targetDays, activeHabits, habitCon
         ? targetById
         : targetByName
 
-    const fallbackActive = activeKeys.has(habit.name) || activeKeys.has(key)
-
     const { ratios, weeksEvaluated } = computeWeeklyRatiosBucketed(
       dates,
       habit,
       habit.name,
-      habitConfigHistory,
-      targets,
-      fallbackActive
+      habitTargetHistory,
+      targets
     )
     if (weeksEvaluated === 0) {
       result[key] = {

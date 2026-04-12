@@ -1,5 +1,5 @@
 import { habits } from '../data/habits'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import { getNow, getTodayDateString } from './now'
 import { addDaysToDateStr, getWeekStartKey } from './progress'
 
@@ -121,7 +121,7 @@ function generateWeekCompletionDates({
  *   achievedByHabit: Record<string, number>,
  *   forcePerfect?: boolean
  * }} args
- * @returns {{ completions: Record<string, string[]>, targetDays: Record<string, number[]>, activeHabits: string[], habitConfigHistory: Record<string, unknown[]>, quantitySettings: Record<string, string> }}
+ * @returns {{ completions: Record<string, string[]>, targetDays: Record<string, number[]>, activeHabits: string[], habitConfigHistory: Record<string, never>, quantitySettings: Record<string, string> }}
  */
 export function generateSimulationHistory({
   months,
@@ -191,8 +191,13 @@ export function generateSimulationHistory({
 
   const activeHabits = [...selected]
   const quantitySettings = getInitialQuantitySettings()
-  const habitConfigHistory = ensureHabitConfigHistoryShape(null, activeHabits, targetDays)
-
-  return { completions, targetDays, activeHabits, habitConfigHistory, quantitySettings }
+  return {
+    completions,
+    targetDays,
+    activeHabits,
+    habitConfigHistory: {},
+    habitTargetHistory: ensureHabitTargetHistoryShape(null, targetDays),
+    quantitySettings,
+  }
 }
 

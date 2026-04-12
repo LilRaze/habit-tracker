@@ -8,7 +8,7 @@ export default function RankLeaderboardShell({
   completions,
   targetDays,
   activeHabits,
-  habitConfigHistory,
+  habitTargetHistory,
   testRankOverride,
   rankVisualTheme = 'lol',
   timeOffsetTick = 0,
@@ -75,7 +75,7 @@ export default function RankLeaderboardShell({
           completions={completions}
           targetDays={targetDays}
           activeHabits={activeHabits}
-          habitConfigHistory={habitConfigHistory}
+          habitTargetHistory={habitTargetHistory}
           testRankOverride={testRankOverride}
           rankVisualTheme={rankVisualTheme}
           timeOffsetTick={timeOffsetTick}

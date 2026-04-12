@@ -58,6 +58,9 @@ export function getHelmetImagePath(rankTier, division) {
 
   if (TIER_WITH_HELMET_FILES.has(rankTier)) {
     const d = normalizeTieredDivision(division)
+    if (d === undefined) {
+      return encodeHelmetPath(`${HELMET_BASE}/Unranked.webp`)
+    }
     const ext = '.webp'
     return encodeHelmetPath(`${HELMET_BASE}/${rankTier}${d}${ext}`)
   }
@@ -134,9 +137,9 @@ function encodeHelmetPath(path) {
 }
 
 function normalizeTieredDivision(division) {
-  if (division == null || !Number.isFinite(Number(division))) return 4
+  if (division == null || !Number.isFinite(Number(division))) return undefined
   const n = Math.round(Number(division))
-  if (n < 1 || n > 4) return 4
+  if (n < 1 || n > 4) return undefined
   return n
 }
 

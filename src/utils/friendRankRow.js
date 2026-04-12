@@ -1,5 +1,5 @@
 import { deriveRanksV4 } from './rankEngineV4'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import { migrateSnapshotHabitKeys } from './habitNameMigration'
 
 /**
@@ -73,15 +73,16 @@ export function mapRpcRowToLeaderboardEntry(row) {
     activeHabits: payload.active_habits,
     quantitySettings: payload.quantity_settings,
     habitConfigHistory: payload.habit_config_history,
+    habitTargetHistory: payload.habit_target_history,
   })
-  const { completions, targetDays, activeHabits, habitConfigHistory: rawHist } = migrated
-  const habitConfigHistory = ensureHabitConfigHistoryShape(rawHist, activeHabits, targetDays)
+  const { completions, targetDays, activeHabits, habitTargetHistory: rawTh } = migrated
+  const habitTargetHistory = ensureHabitTargetHistoryShape(rawTh, targetDays)
   const testRankOverride =
     payload.test_rank_override && typeof payload.test_rank_override === 'object'
       ? payload.test_rank_override
       : null
 
-  const rankData = deriveRanksV4(completions, targetDays, activeHabits, habitConfigHistory)
+  const rankData = deriveRanksV4(completions, targetDays, activeHabits, habitTargetHistory)
   const overallForDisplay =
     testRankOverride && typeof testRankOverride.rank === 'string'
       ? {
@@ -102,7 +103,7 @@ export function mapRpcRowToLeaderboardEntry(row) {
       completions,
       targetDays,
       activeHabits,
-      habitConfigHistory,
+      habitTargetHistory,
     },
   }
 }
@@ -116,15 +117,11 @@ export function buildSelfLeaderboardEntry(
   completions,
   targetDays,
   activeHabits,
-  habitConfigHistory,
+  habitTargetHistory,
   testRankOverride
 ) {
   if (!userId) return null
-  const history = ensureHabitConfigHistoryShape(
-    habitConfigHistory ?? null,
-    activeHabits ?? [],
-    targetDays ?? {}
-  )
+  const history = ensureHabitTargetHistoryShape(habitTargetHistory ?? null, targetDays ?? {})
   const rankData = deriveRanksV4(completions ?? {}, targetDays ?? {}, activeHabits ?? [], history)
   const overallForDisplay =
     testRankOverride && typeof testRankOverride.rank === 'string'
@@ -146,7 +143,7 @@ export function buildSelfLeaderboardEntry(
       completions: completions ?? {},
       targetDays: targetDays ?? {},
       activeHabits: activeHabits ?? [],
-      habitConfigHistory: history,
+      habitTargetHistory: history,
     },
   }
 }

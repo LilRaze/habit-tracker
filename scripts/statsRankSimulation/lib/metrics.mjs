@@ -146,7 +146,7 @@ export function statsToPercentDisplay(derived) {
 
 export function runProductionStatsAndRank(completions, targetDays, activeHabits) {
   const derived = deriveLongTermStats(completions, targetDays, activeHabits)
-  const rankData = deriveRanksV4(completions, targetDays, activeHabits)
+  const rankData = deriveRanksV4(completions, targetDays, activeHabits, undefined)
   return { derived, rankData }
 }
 

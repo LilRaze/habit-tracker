@@ -1,9 +1,9 @@
 import { deriveRanksV4 } from './rankEngineV4'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import { buildRankDisplayView } from './rankDisplayPresentation'
 
 /**
- * @param {{ rankSnapshot: { completions: object, targetDays: object, activeHabits: string[], habitConfigHistory?: object } | null } | null} entry
+ * @param {{ rankSnapshot: { completions: object, targetDays: object, activeHabits: string[], habitTargetHistory?: object } | null } | null} entry
  * @param {{ id: string, name: string }} habit
  * @param {'lol'|'valorant'} rankVisualTheme
  */
@@ -23,7 +23,7 @@ export function computeLeaderboardHabitRow(entry, habit, rankVisualTheme) {
     }
   }
 
-  const { completions, targetDays, activeHabits, habitConfigHistory } = entry.rankSnapshot
+  const { completions, targetDays, activeHabits, habitTargetHistory } = entry.rankSnapshot
   const activeSet = new Set(activeHabits ?? [])
   const tracksHabit = activeSet.has(habit.name) || activeSet.has(habit.id)
   if (!tracksHabit) {
@@ -34,11 +34,7 @@ export function computeLeaderboardHabitRow(entry, habit, rankVisualTheme) {
     }
   }
 
-  const history = ensureHabitConfigHistoryShape(
-    habitConfigHistory ?? null,
-    activeHabits ?? [],
-    targetDays ?? {}
-  )
+  const history = ensureHabitTargetHistoryShape(habitTargetHistory ?? null, targetDays ?? {})
   const rankData = deriveRanksV4(completions, targetDays, activeHabits, history)
   const mock = rankData.habits.find((h) => h.habitName === habit.name || h.habitId === habit.id)
   if (!mock) {

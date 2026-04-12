@@ -15,6 +15,7 @@ import {
   STORAGE_TARGET_DAYS,
   STORAGE_ACTIVE_HABITS,
   STORAGE_HABIT_CONFIG_HISTORY,
+  STORAGE_HABIT_TARGET_HISTORY,
   STORAGE_QUANTITY_SETTINGS,
   STORAGE_RANKS_LEGACY,
   STORAGE_TEST_RANK_OVERRIDE,
@@ -23,10 +24,11 @@ import {
   loadCompletions,
   loadTargetDays,
   loadActiveHabits,
-  loadHabitConfigHistory,
   loadQuantitySettings,
-  persistHabitConfigHistory,
+  loadHabitTargetHistory,
+  persistHabitTargetHistory,
 } from './utils/persistedState'
+import { ensureHabitTargetHistoryShape, recordTargetChangeScheduledForNextWeek } from './utils/habitTargetHistory'
 import {
   normalizeSnapshot,
   loadLocalSnapshot,
@@ -35,18 +37,19 @@ import {
 } from './utils/appStateSnapshot'
 import { loadRankVisualTheme, saveRankVisualTheme } from './utils/rankVisualTheme'
 import { loadTestRankOverride, saveTestRankOverride, clearTestRankOverride } from './utils/testRankOverride'
-import { getTodayDateString, clearTimeOffsetMonths, setTimeOffsetMonths, getTimeOffsetMonths } from './utils/now'
+import {
+  getTodayDateString,
+  clearTimeOffsetMonths,
+  clearTimeOffsetDays,
+  setTimeOffsetMonths,
+  getTimeOffsetMonths,
+  getTimeOffsetDays,
+  setTimeOffsetDays,
+} from './utils/now'
 import { generateTestHabitData, applyStatsPreset } from './utils/testData'
 import { generateSimulationHistory } from './utils/simulation'
 import { upsertHabitUserState } from './services/cloudState'
 import { sanitizeQuantityTrackingValue } from './utils/quantityInput'
-import {
-  recordHabitConfigChange,
-  sortUniqueDayIndices,
-  defaultTargetDayIndicesForHabit,
-  ensureHabitConfigHistoryShape,
-} from './utils/habitConfigHistory'
-import { habits } from './data/habits'
 import './App.css'
 
 const TABS = {
@@ -65,10 +68,9 @@ function App() {
   const [completions, setCompletions] = useState(loadCompletions)
   const [activeHabits, setActiveHabits] = useState(loadActiveHabits)
   const [targetDays, setTargetDays] = useState(loadTargetDays)
-  const [habitConfigHistory, setHabitConfigHistory] = useState(() => {
-    const a = loadActiveHabits()
-    return loadHabitConfigHistory(a, loadTargetDays())
-  })
+  const [habitTargetHistory, setHabitTargetHistory] = useState(() =>
+    loadHabitTargetHistory(loadTargetDays())
+  )
   const [quantitySettings, setQuantitySettings] = useState(loadQuantitySettings)
 
   const configSyncRef = useRef({ activeHabits, targetDays })
@@ -85,7 +87,7 @@ function App() {
     setCompletions(n.completions)
     setTargetDays(n.targetDays)
     setActiveHabits(n.activeHabits)
-    setHabitConfigHistory(n.habitConfigHistory)
+    setHabitTargetHistory(n.habitTargetHistory)
     setQuantitySettings(n.quantitySettings)
     setRankVisualTheme(n.rankVisualTheme)
     setTestRankOverride(n.testRankOverride)
@@ -98,7 +100,8 @@ function App() {
       completions,
       targetDays,
       activeHabits,
-      habitConfigHistory,
+      habitConfigHistory: {},
+      habitTargetHistory,
       quantitySettings,
       rankVisualTheme,
       testRankOverride,
@@ -108,7 +111,7 @@ function App() {
       completions,
       targetDays,
       activeHabits,
-      habitConfigHistory,
+      habitTargetHistory,
       quantitySettings,
       rankVisualTheme,
       testRankOverride,
@@ -137,12 +140,12 @@ function App() {
   }, [targetDays])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_ACTIVE_HABITS, JSON.stringify(activeHabits))
-  }, [activeHabits])
+    persistHabitTargetHistory(habitTargetHistory)
+  }, [habitTargetHistory])
 
   useEffect(() => {
-    persistHabitConfigHistory(habitConfigHistory)
-  }, [habitConfigHistory])
+    localStorage.setItem(STORAGE_ACTIVE_HABITS, JSON.stringify(activeHabits))
+  }, [activeHabits])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_QUANTITY_SETTINGS, JSON.stringify(quantitySettings))
@@ -155,7 +158,7 @@ function App() {
   const resetAllProgress = async () => {
     if (
       !window.confirm(
-        'Reset all app data on this device? This clears habit completions, active habits, weekly target days, habit configuration history, quantity settings, rank display theme (back to default), test rank override, and simulated time offset. If you are signed in, the empty state will be saved to the cloud as well.'
+        'Reset all app data on this device? This clears habit completions, active habits, weekly target days, legacy habit config history storage, quantity settings, rank display theme (back to default), test rank override, and simulated time offsets (months + days). If you are signed in, the empty state will be saved to the cloud as well.'
       )
     ) {
       return
@@ -164,17 +167,19 @@ function App() {
     localStorage.removeItem(STORAGE_TARGET_DAYS)
     localStorage.removeItem(STORAGE_ACTIVE_HABITS)
     localStorage.removeItem(STORAGE_HABIT_CONFIG_HISTORY)
+    localStorage.removeItem(STORAGE_HABIT_TARGET_HISTORY)
     localStorage.removeItem(STORAGE_QUANTITY_SETTINGS)
     localStorage.removeItem(STORAGE_RANKS_LEGACY)
     localStorage.removeItem(STORAGE_TEST_RANK_OVERRIDE)
     clearTimeOffsetMonths()
+    clearTimeOffsetDays()
     clearTestRankOverride()
     bumpTimeOffset()
     const empty = getEmptySnapshot()
     setCompletions(empty.completions)
     setActiveHabits(empty.activeHabits)
     setTargetDays(empty.targetDays)
-    setHabitConfigHistory(empty.habitConfigHistory)
+    setHabitTargetHistory(empty.habitTargetHistory)
     setQuantitySettings(empty.quantitySettings)
     setRankVisualTheme('lol')
     setTestRankOverride(null)
@@ -184,43 +189,23 @@ function App() {
   }
 
   const toggleActiveHabit = (habitName) => {
-    const today = getTodayDateString()
-    const { activeHabits: a, targetDays: t } = configSyncRef.current
+    const { activeHabits: a } = configSyncRef.current
     const nextActive = a.includes(habitName) ? a.filter((n) => n !== habitName) : [...a, habitName]
-    const habit = habits.find((h) => h.name === habitName)
-    const rawDays = t[habitName]
-    const nextDays =
-      Array.isArray(rawDays) && rawDays.length > 0
-        ? sortUniqueDayIndices(rawDays)
-        : defaultTargetDayIndicesForHabit(habit ?? { defaultWeeklyTarget: 3, name: habitName })
     setActiveHabits(nextActive)
-    setHabitConfigHistory((hist) =>
-      recordHabitConfigChange(hist, habitName, today, {
-        isActive: nextActive.includes(habitName),
-        targetDays: nextDays,
-      })
-    )
   }
 
   const toggleTargetDay = (habitName, dayIndex) => {
-    let nextDaysForHistory = null
     setTargetDays((prev) => {
       const days = prev[habitName] ?? []
       const has = days.includes(dayIndex)
       const next = { ...prev }
       const nextDays = has ? days.filter((d) => d !== dayIndex) : [...days, dayIndex].sort((a, b) => a - b)
+      setHabitTargetHistory((h) =>
+        recordTargetChangeScheduledForNextWeek(h, habitName, days, nextDays)
+      )
       next[habitName] = nextDays
-      nextDaysForHistory = nextDays
       return next
     })
-    if (!configSyncRef.current.activeHabits.includes(habitName)) return
-    const today = getTodayDateString()
-    setHabitConfigHistory((hist) =>
-      recordHabitConfigChange(hist, habitName, today, {
-        isActive: true,
-        targetDays: sortUniqueDayIndices(nextDaysForHistory ?? []),
-      })
-    )
   }
 
   const toggleHabit = (habitName, dateStr) => {
@@ -246,12 +231,8 @@ function App() {
     setCompletions(data.completions)
     setActiveHabits(data.activeHabits)
     setTargetDays(data.targetDays)
-    setHabitConfigHistory(
-      ensureHabitConfigHistoryShape(
-        data.habitConfigHistory ?? null,
-        data.activeHabits ?? [],
-        data.targetDays ?? {}
-      )
+    setHabitTargetHistory(
+      ensureHabitTargetHistoryShape(data.habitTargetHistory ?? null, data.targetDays ?? {})
     )
     setQuantitySettings(data.quantitySettings)
     bumpTimeOffset()
@@ -282,6 +263,17 @@ function App() {
     bumpTimeOffset()
   }
 
+  const handleShiftVirtualTodayByDays = (delta) => {
+    const next = Math.max(0, getTimeOffsetDays() + Math.floor(Number(delta) || 0))
+    setTimeOffsetDays(next)
+    bumpTimeOffset()
+  }
+
+  const handleClearVirtualDayOffset = () => {
+    clearTimeOffsetDays()
+    bumpTimeOffset()
+  }
+
   return (
     <div className="app">
       <UsernameSetupGate />
@@ -302,7 +294,7 @@ function App() {
           activeHabits={activeHabits}
           onToggleActiveHabit={toggleActiveHabit}
           targetDays={targetDays}
-          habitConfigHistory={habitConfigHistory}
+          habitTargetHistory={habitTargetHistory}
           onToggleTargetDay={toggleTargetDay}
           quantitySettings={quantitySettings}
           onUpdateQuantitySetting={updateQuantitySetting}
@@ -316,6 +308,8 @@ function App() {
           onApplyStatsPreset={handleApplyStatsPreset}
           onApplyTestRank={handleApplyTestRank}
           onApplyTimeOffset={handleApplyTimeOffset}
+          onShiftVirtualTodayByDays={handleShiftVirtualTodayByDays}
+          onClearVirtualDayOffset={handleClearVirtualDayOffset}
           cloudStatus={cloudStatus}
           lastCloudError={lastError}
           onAfterSignOut={handleAfterSignOut}

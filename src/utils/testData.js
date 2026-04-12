@@ -1,5 +1,5 @@
 import { habits } from '../data/habits'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import { addDaysToDateStr } from './progress'
 import { getNow } from './now'
 
@@ -52,7 +52,7 @@ const PRESET_PROB = {
 /**
  * @param {number} months - how far back to generate
  * @param {{ preset?: 0 | 25 | 50 | 75 | 100, mixed?: boolean }} [profile]
- * @returns {{ completions: Object, targetDays: Object, activeHabits: string[], habitConfigHistory: Object, quantitySettings: Object }}
+ * @returns {{ completions: Object, targetDays: Object, activeHabits: string[], habitConfigHistory: Record<string, never>, quantitySettings: Object }}
  */
 export function generateTestHabitData(months, profile = {}) {
   const monthsCount = Math.max(1, Math.min(48, Math.floor(Number(months)) || 6))
@@ -123,7 +123,8 @@ export function generateTestHabitData(months, profile = {}) {
     completions,
     targetDays,
     activeHabits,
-    habitConfigHistory: ensureHabitConfigHistoryShape(null, activeHabits, targetDays),
+    habitConfigHistory: {},
+    habitTargetHistory: ensureHabitTargetHistoryShape(null, targetDays),
     quantitySettings,
   }
 }

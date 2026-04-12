@@ -3,18 +3,20 @@ import {
   loadTargetDays,
   loadActiveHabits,
   loadHabitConfigHistory,
+  loadHabitTargetHistory,
   loadQuantitySettings,
   persistCompletions,
   persistTargetDays,
   persistActiveHabits,
   persistHabitConfigHistory,
+  persistHabitTargetHistory,
   persistQuantitySettings,
   getInitialCompletions,
   getInitialTargetDays,
   getInitialActiveHabits,
   getInitialQuantitySettings,
 } from './persistedState'
-import { ensureHabitConfigHistoryShape } from './habitConfigHistory'
+import { ensureHabitTargetHistoryShape } from './habitTargetHistory'
 import { migrateSnapshotHabitKeys } from './habitNameMigration'
 import { loadRankVisualTheme, saveRankVisualTheme } from './rankVisualTheme'
 import { loadTestRankOverride, saveTestRankOverride } from './testRankOverride'
@@ -28,7 +30,8 @@ export function getEmptySnapshot() {
     completions: getInitialCompletions(),
     targetDays,
     activeHabits,
-    habitConfigHistory: ensureHabitConfigHistoryShape(null, activeHabits, targetDays),
+    habitConfigHistory: {},
+    habitTargetHistory: ensureHabitTargetHistoryShape(null, targetDays),
     quantitySettings: getInitialQuantitySettings(),
     rankVisualTheme: 'lol',
     testRankOverride: null,
@@ -41,7 +44,8 @@ export function getEmptySnapshot() {
  * @property {Record<string, string[]>} completions
  * @property {Record<string, number[]>} targetDays
  * @property {string[]} activeHabits
- * @property {import('./habitConfigHistory').HabitConfigHistory} habitConfigHistory
+ * @property {Record<string, never>} habitConfigHistory — legacy cloud column; always `{}` in app logic
+ * @property {import('./habitTargetHistory').HabitTargetHistory} habitTargetHistory
  * @property {Record<string, string>} quantitySettings
  * @property {'lol'|'valorant'} rankVisualTheme
  * @property {import('./testRankOverride').TestRankOverride | null} [testRankOverride]
@@ -55,7 +59,8 @@ export function loadLocalSnapshot() {
     completions: loadCompletions(),
     targetDays,
     activeHabits,
-    habitConfigHistory: loadHabitConfigHistory(activeHabits, targetDays),
+    habitConfigHistory: loadHabitConfigHistory(),
+    habitTargetHistory: loadHabitTargetHistory(targetDays),
     quantitySettings: loadQuantitySettings(),
     rankVisualTheme: loadRankVisualTheme(),
     testRankOverride: loadTestRankOverride(),
@@ -84,13 +89,19 @@ export function rowToSnapshot(row) {
       row.habit_config_history && typeof row.habit_config_history === 'object'
         ? row.habit_config_history
         : undefined,
+    habitTargetHistory:
+      row.habit_target_history && typeof row.habit_target_history === 'object'
+        ? row.habit_target_history
+        : undefined,
   })
-  const { completions, targetDays, activeHabits, quantitySettings, habitConfigHistory: rawHistory } = migrated
+  const { completions, targetDays, activeHabits, quantitySettings, habitTargetHistory: rawTargetHist } =
+    migrated
   return {
     completions,
     targetDays,
     activeHabits,
-    habitConfigHistory: ensureHabitConfigHistoryShape(rawHistory, activeHabits, targetDays),
+    habitConfigHistory: {},
+    habitTargetHistory: ensureHabitTargetHistoryShape(rawTargetHist, targetDays),
     quantitySettings,
     rankVisualTheme: row.rank_visual_theme === 'valorant' ? 'valorant' : 'lol',
     testRankOverride: local.testRankOverride,
@@ -106,14 +117,16 @@ export function normalizeSnapshot(s) {
     activeHabits: s.activeHabits ?? s.active_habits ?? getInitialActiveHabits(),
     quantitySettings: s.quantity_settings ?? s.quantitySettings ?? getInitialQuantitySettings(),
     habitConfigHistory: s.habit_config_history ?? s.habitConfigHistory,
+    habitTargetHistory: s.habit_target_history ?? s.habitTargetHistory,
   })
-  const { completions, targetDays, activeHabits, quantitySettings: qty, habitConfigHistory: rawHistory } =
+  const { completions, targetDays, activeHabits, quantitySettings: qty, habitTargetHistory: rawTh } =
     migrated
   return {
     completions,
     targetDays,
     activeHabits,
-    habitConfigHistory: ensureHabitConfigHistoryShape(rawHistory, activeHabits, targetDays),
+    habitConfigHistory: {},
+    habitTargetHistory: ensureHabitTargetHistoryShape(rawTh, targetDays),
     quantitySettings: qty,
     rankVisualTheme:
       s.rankVisualTheme === 'valorant' || s.rank_visual_theme === 'valorant' ? 'valorant' : 'lol',
@@ -135,6 +148,7 @@ export function snapshotCloudComparable(s) {
     targetDays: n.targetDays,
     activeHabits: n.activeHabits,
     habitConfigHistory: n.habitConfigHistory,
+    habitTargetHistory: n.habitTargetHistory,
     quantitySettings: n.quantitySettings,
     rankVisualTheme: n.rankVisualTheme,
   }
@@ -150,6 +164,7 @@ export function snapshotToCloudPayload(snapshot) {
     target_days: n.targetDays,
     active_habits: n.activeHabits,
     habit_config_history: n.habitConfigHistory,
+    habit_target_history: n.habitTargetHistory,
     quantity_settings: n.quantitySettings,
     rank_visual_theme: n.rankVisualTheme,
     test_rank_override: null,
@@ -167,6 +182,7 @@ export function persistSnapshotToLocal(snapshot) {
   persistTargetDays(n.targetDays)
   persistActiveHabits(n.activeHabits)
   persistHabitConfigHistory(n.habitConfigHistory)
+  persistHabitTargetHistory(n.habitTargetHistory)
   persistQuantitySettings(n.quantitySettings)
   saveRankVisualTheme(n.rankVisualTheme)
   saveTestRankOverride(n.testRankOverride)

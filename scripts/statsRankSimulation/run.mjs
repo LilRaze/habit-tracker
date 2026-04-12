@@ -140,7 +140,7 @@ export function runSimulationBatch({ mode = 'validation', smoke = false }) {
           targetDays,
           activeHabits
         )
-        const rankData = deriveRanksV4Sim(completions, targetDays, activeHabits)
+        const rankData = deriveRanksV4Sim(completions, targetDays, activeHabits, undefined)
         const pct = statsToPercentDisplay(derived)
         const perHabitRawStatSummary = {}
         Object.entries(perHabitRaw).forEach(([name, b]) => {
