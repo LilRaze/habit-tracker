@@ -241,11 +241,15 @@ function computeWeeklyRatios(dates, habit, habitName, habitConfigHistory, fallba
 
   // Include the current Mon–Sun week (partial progress counts toward ratio).
   while (weekStart <= currentWeekStart) {
+    // Config must be resolved with a date *inside* this week. Using Monday alone breaks
+    // mid-week activations/target changes: a segment effective Tue is not <= Mon, so the
+    // epoch (often inactive after reset) stays chosen and the whole week is skipped.
+    const configDateStr = addDaysToDateStr(weekStart, 6)
     let cfg
     if (useHistory) {
       cfg = resolveHabitConfigAtDate(
         habitName,
-        weekStart,
+        configDateStr,
         habitConfigHistory,
         habit,
         fallbackTargets,

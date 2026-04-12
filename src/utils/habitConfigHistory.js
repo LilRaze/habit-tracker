@@ -143,7 +143,9 @@ export function recordHabitConfigChange(history, habitName, today, { isActive, t
 }
 
 /**
- * Rank engine: latest segment with effectiveFrom <= dateStr (week anchor = Monday start string).
+ * Rank engine: latest segment with effectiveFrom <= dateStr.
+ * For weekly scoring, pass a calendar day in that week (e.g. Sunday) so segments that
+ * start mid-week still apply to that week. Passing only Monday wrongly drops those segments.
  * Falls back to current targetDays + isActive when history missing for that habit.
  */
 export function resolveHabitConfigAtDate(
