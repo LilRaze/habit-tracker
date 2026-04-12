@@ -140,7 +140,11 @@ export function normalizeSnapshot(s) {
   }
 }
 
-/** Subset used for conflict detection (excludes dev-only fields so local test tools don’t force a false conflict). */
+/**
+ * Subset used for conflict detection (excludes dev-only fields so local test tools don’t force a false conflict).
+ * `habitTargetHistory` is omitted: cloud rows may predate the `habit_target_history` column, and comparing
+ * would false-positive conflict (local segments vs cloud default shape).
+ */
 export function snapshotCloudComparable(s) {
   const n = normalizeSnapshot(s)
   return {
@@ -148,7 +152,6 @@ export function snapshotCloudComparable(s) {
     targetDays: n.targetDays,
     activeHabits: n.activeHabits,
     habitConfigHistory: n.habitConfigHistory,
-    habitTargetHistory: n.habitTargetHistory,
     quantitySettings: n.quantitySettings,
     rankVisualTheme: n.rankVisualTheme,
   }
