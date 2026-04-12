@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search, Inbox, Send, Users } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFriends } from '../contexts/FriendsContext'
 import { profileHasValidUsername } from '../utils/usernameRules'
@@ -27,6 +27,17 @@ function relationshipLabel(key) {
     default:
       return null
   }
+}
+
+function FriendsSectionShell({ children }) {
+  return (
+    <section className="settings-section settings-section-friends">
+      <header className="settings-friends-panel-head">
+        <h2 className="settings-section-title settings-friends-title">Friends</h2>
+      </header>
+      {children}
+    </section>
+  )
 }
 
 export default function FriendsPanel() {
@@ -75,47 +86,49 @@ export default function FriendsPanel() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <section className="settings-section settings-section-friends">
-        <h2 className="settings-section-title">Friends</h2>
-        <p className="settings-friends-muted">Friends require cloud sign-in (configure Supabase).</p>
-      </section>
+      <FriendsSectionShell>
+        <div className="settings-friends-card settings-friends-card--message">
+          <p className="settings-friends-muted">Friends require cloud sign-in (configure Supabase).</p>
+        </div>
+      </FriendsSectionShell>
     )
   }
 
   if (!user) {
     return (
-      <section className="settings-section settings-section-friends">
-        <h2 className="settings-section-title">Friends</h2>
-        <p className="settings-friends-muted">Sign in to add friends.</p>
-      </section>
+      <FriendsSectionShell>
+        <div className="settings-friends-card settings-friends-card--message">
+          <p className="settings-friends-muted">Sign in to add friends.</p>
+        </div>
+      </FriendsSectionShell>
     )
   }
 
   if (profileStatus === 'loading') {
     return (
-      <section className="settings-section settings-section-friends">
-        <h2 className="settings-section-title">Friends</h2>
-        <div className="settings-friends-row">
-          <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
-          <span>Loading profile…</span>
+      <FriendsSectionShell>
+        <div className="settings-friends-card settings-friends-card--message">
+          <div className="settings-friends-empty settings-friends-empty--loading" role="status">
+            <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+            <span>Loading profile…</span>
+          </div>
         </div>
-      </section>
+      </FriendsSectionShell>
     )
   }
 
   if (!profile || !profileHasValidUsername(profile)) {
     return (
-      <section className="settings-section settings-section-friends">
-        <h2 className="settings-section-title">Friends</h2>
-        <p className="settings-friends-muted">Set a username in Account before you can search or send friend requests.</p>
-      </section>
+      <FriendsSectionShell>
+        <div className="settings-friends-card settings-friends-card--message">
+          <p className="settings-friends-muted">Set a username in Account before you can search or send friend requests.</p>
+        </div>
+      </FriendsSectionShell>
     )
   }
 
   return (
-    <section className="settings-section settings-section-friends">
-      <h2 className="settings-section-title">Friends</h2>
-
+    <FriendsSectionShell>
       {listsError ? <p className="settings-friends-alert">{listsError}</p> : null}
       {opError ? (
         <p className="settings-friends-alert">
@@ -126,143 +139,195 @@ export default function FriendsPanel() {
         </p>
       ) : null}
 
-      <div className="settings-friends-block">
-        <h3 className="settings-friends-subheading">Find by username</h3>
-        <div className="settings-friends-search-row">
-          <input
-            className="settings-friends-input"
-            type="text"
-            placeholder="username"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={!canUseFriends}
-            autoComplete="off"
-          />
-          <button type="button" className="settings-friends-btn" onClick={runSearchClick} disabled={!canUseFriends || searchLoading}>
-            {searchLoading ? '…' : 'Search'}
-          </button>
-        </div>
-        {searchError ? <p className="settings-friends-hint settings-friends-error">{searchError}</p> : null}
-        {didSearch && searchResults.length === 0 && !searchLoading && !searchError ? (
-          <p className="settings-friends-hint">No matches.</p>
-        ) : null}
-        <ul className="settings-friends-list">
-          {searchResults.map((p) => {
-            const rel = relationshipToTarget(p.id, user.id, incoming, outgoing, friends)
-            const label = relationshipLabel(rel)
-            const showAdd = rel === 'none' && canUseFriends
-            return (
-              <li key={p.id} className="settings-friends-list-item">
-                <span className="settings-friends-name">{p.username ?? p.id}</span>
-                {label ? <span className="settings-friends-tag">{label}</span> : null}
-                {showAdd ? (
-                  <button
-                    type="button"
-                    className="settings-friends-btn settings-friends-btn--small"
-                    disabled={rowBusy === `add-${p.id}`}
-                    onClick={() =>
-                      wrapRow(`add-${p.id}`, async () => {
-                        await sendRequest(p.id)
-                      })
-                    }
-                  >
-                    {rowBusy === `add-${p.id}` ? '…' : 'Add friend'}
-                  </button>
-                ) : null}
-              </li>
-            )
-          })}
-        </ul>
-      </div>
+      <div className="settings-friends-stack">
+        <article className="settings-friends-card" aria-labelledby="friends-find-heading">
+          <h3 id="friends-find-heading" className="settings-friends-card-heading">
+            <Search size={16} strokeWidth={2} className="settings-friends-card-icon" aria-hidden />
+            <span>Find by username</span>
+          </h3>
+          <div className="settings-friends-card-body">
+            <div className="settings-friends-search-row">
+              <input
+                className="settings-friends-input"
+                type="text"
+                placeholder="username"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={!canUseFriends}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="settings-friends-btn settings-friends-btn--search"
+                onClick={runSearchClick}
+                disabled={!canUseFriends || searchLoading}
+              >
+                {searchLoading ? (
+                  <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                ) : (
+                  'Search'
+                )}
+              </button>
+            </div>
+            {searchError ? (
+              <p className="settings-friends-card-hint settings-friends-error">{searchError}</p>
+            ) : null}
+            {didSearch && searchResults.length === 0 && !searchLoading && !searchError ? (
+              <div className="settings-friends-empty" role="status">
+                No matches.
+              </div>
+            ) : null}
+            <ul className="settings-friends-list">
+              {searchResults.map((p) => {
+                const rel = relationshipToTarget(p.id, user.id, incoming, outgoing, friends)
+                const label = relationshipLabel(rel)
+                const showAdd = rel === 'none' && canUseFriends
+                return (
+                  <li key={p.id} className="settings-friends-list-item">
+                    <div className="settings-friends-list-main">
+                      <span className="settings-friends-name">{p.username ?? p.id}</span>
+                      {label ? <span className="settings-friends-chip">{label}</span> : null}
+                    </div>
+                    {showAdd ? (
+                      <button
+                        type="button"
+                        className="settings-friends-btn settings-friends-btn--small"
+                        disabled={rowBusy === `add-${p.id}`}
+                        onClick={() =>
+                          wrapRow(`add-${p.id}`, async () => {
+                            await sendRequest(p.id)
+                          })
+                        }
+                      >
+                        {rowBusy === `add-${p.id}` ? '…' : 'Add friend'}
+                      </button>
+                    ) : null}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </article>
 
-      <div className="settings-friends-block">
-        <h3 className="settings-friends-subheading">Incoming requests</h3>
-        {listsLoading ? (
-          <p className="settings-friends-hint">Loading…</p>
-        ) : incoming.length === 0 ? (
-          <p className="settings-friends-hint">None pending.</p>
-        ) : (
-          <ul className="settings-friends-list">
-            {incoming.map((r) => (
-              <li key={r.id} className="settings-friends-list-item settings-friends-list-item--row">
-                <span className="settings-friends-name">{r.sender_profile?.username ?? r.sender_id}</span>
-                <span className="settings-friends-actions">
-                  <button
-                    type="button"
-                    className="settings-friends-btn settings-friends-btn--small"
-                    disabled={rowBusy === `acc-${r.id}` || rowBusy === `dec-${r.id}`}
-                    onClick={() =>
-                      wrapRow(`acc-${r.id}`, async () => {
-                        await acceptRequest(r.id, r.sender_id, r.receiver_id)
-                      })
-                    }
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="settings-friends-btn settings-friends-btn--small settings-friends-btn--ghost"
-                    disabled={rowBusy === `acc-${r.id}` || rowBusy === `dec-${r.id}`}
-                    onClick={() =>
-                      wrapRow(`dec-${r.id}`, async () => {
-                        await declineRequest(r.id)
-                      })
-                    }
-                  >
-                    Decline
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <article className="settings-friends-card" aria-labelledby="friends-incoming-heading">
+          <h3 id="friends-incoming-heading" className="settings-friends-card-heading">
+            <Inbox size={16} strokeWidth={2} className="settings-friends-card-icon" aria-hidden />
+            <span>Incoming requests</span>
+          </h3>
+          <div className="settings-friends-card-body settings-friends-card-body--flush">
+            {listsLoading ? (
+              <div className="settings-friends-empty settings-friends-empty--loading" role="status">
+                <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                <span>Loading…</span>
+              </div>
+            ) : incoming.length === 0 ? (
+              <div className="settings-friends-empty" role="status">
+                None pending.
+              </div>
+            ) : (
+              <ul className="settings-friends-list settings-friends-list--inset">
+                {incoming.map((r) => (
+                  <li key={r.id} className="settings-friends-list-item settings-friends-list-item--row">
+                    <span className="settings-friends-name">{r.sender_profile?.username ?? r.sender_id}</span>
+                    <span className="settings-friends-actions">
+                      <button
+                        type="button"
+                        className="settings-friends-btn settings-friends-btn--small"
+                        disabled={rowBusy === `acc-${r.id}` || rowBusy === `dec-${r.id}`}
+                        onClick={() =>
+                          wrapRow(`acc-${r.id}`, async () => {
+                            await acceptRequest(r.id, r.sender_id, r.receiver_id)
+                          })
+                        }
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-friends-btn settings-friends-btn--small settings-friends-btn--ghost"
+                        disabled={rowBusy === `acc-${r.id}` || rowBusy === `dec-${r.id}`}
+                        onClick={() =>
+                          wrapRow(`dec-${r.id}`, async () => {
+                            await declineRequest(r.id)
+                          })
+                        }
+                      >
+                        Decline
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </article>
 
-      <div className="settings-friends-block">
-        <h3 className="settings-friends-subheading">Outgoing requests</h3>
-        {listsLoading ? (
-          <p className="settings-friends-hint">Loading…</p>
-        ) : outgoing.length === 0 ? (
-          <p className="settings-friends-hint">None pending.</p>
-        ) : (
-          <ul className="settings-friends-list">
-            {outgoing.map((r) => (
-              <li key={r.id} className="settings-friends-list-item settings-friends-list-item--row">
-                <span className="settings-friends-name">{r.receiver_profile?.username ?? r.receiver_id}</span>
-                <button
-                  type="button"
-                  className="settings-friends-btn settings-friends-btn--small settings-friends-btn--ghost"
-                  disabled={rowBusy === `out-${r.id}`}
-                  onClick={() =>
-                    wrapRow(`out-${r.id}`, async () => {
-                      await cancelRequest(r.id)
-                    })
-                  }
-                >
-                  Cancel
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <article className="settings-friends-card" aria-labelledby="friends-outgoing-heading">
+          <h3 id="friends-outgoing-heading" className="settings-friends-card-heading">
+            <Send size={16} strokeWidth={2} className="settings-friends-card-icon" aria-hidden />
+            <span>Outgoing requests</span>
+          </h3>
+          <div className="settings-friends-card-body settings-friends-card-body--flush">
+            {listsLoading ? (
+              <div className="settings-friends-empty settings-friends-empty--loading" role="status">
+                <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                <span>Loading…</span>
+              </div>
+            ) : outgoing.length === 0 ? (
+              <div className="settings-friends-empty" role="status">
+                None pending.
+              </div>
+            ) : (
+              <ul className="settings-friends-list settings-friends-list--inset">
+                {outgoing.map((r) => (
+                  <li key={r.id} className="settings-friends-list-item settings-friends-list-item--row">
+                    <span className="settings-friends-name">{r.receiver_profile?.username ?? r.receiver_id}</span>
+                    <button
+                      type="button"
+                      className="settings-friends-btn settings-friends-btn--small settings-friends-btn--ghost"
+                      disabled={rowBusy === `out-${r.id}`}
+                      onClick={() =>
+                        wrapRow(`out-${r.id}`, async () => {
+                          await cancelRequest(r.id)
+                        })
+                      }
+                    >
+                      Cancel
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </article>
 
-      <div className="settings-friends-block">
-        <h3 className="settings-friends-subheading">Friends</h3>
-        {listsLoading ? (
-          <p className="settings-friends-hint">Loading…</p>
-        ) : friends.length === 0 ? (
-          <p className="settings-friends-hint">No accepted friends yet.</p>
-        ) : (
-          <ul className="settings-friends-list">
-            {friends.map((f) => (
-              <li key={f.id} className="settings-friends-list-item">
-                <span className="settings-friends-name">{f.username ?? f.id}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <article className="settings-friends-card" aria-labelledby="friends-list-heading">
+          <h3 id="friends-list-heading" className="settings-friends-card-heading">
+            <Users size={16} strokeWidth={2} className="settings-friends-card-icon" aria-hidden />
+            <span>Friends</span>
+          </h3>
+          <div className="settings-friends-card-body settings-friends-card-body--flush">
+            {listsLoading ? (
+              <div className="settings-friends-empty settings-friends-empty--loading" role="status">
+                <Loader2 size={16} strokeWidth={2} className="settings-account-spin" aria-hidden />
+                <span>Loading…</span>
+              </div>
+            ) : friends.length === 0 ? (
+              <div className="settings-friends-empty" role="status">
+                No accepted friends yet.
+              </div>
+            ) : (
+              <ul className="settings-friends-list settings-friends-list--inset">
+                {friends.map((f) => (
+                  <li key={f.id} className="settings-friends-list-item">
+                    <span className="settings-friends-name">{f.username ?? f.id}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </article>
       </div>
-    </section>
+    </FriendsSectionShell>
   )
 }

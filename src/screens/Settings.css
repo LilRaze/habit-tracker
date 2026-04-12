@@ -172,19 +172,80 @@
   background: var(--bg-elevated);
 }
 
+.settings-friends-panel-head {
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section-friends .settings-friends-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.settings-friends-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-friends-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.settings-friends-card--message {
+  padding: 14px 14px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.settings-friends-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.settings-friends-card-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+
+.settings-friends-card-body {
+  padding: 12px;
+}
+
+.settings-friends-card-body--flush {
+  padding: 0;
+}
+
+.settings-friends-card-hint {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .settings-friends-muted {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-muted);
   line-height: 1.45;
-}
-
-.settings-friends-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
 }
 
 .settings-friends-alert {
@@ -197,31 +258,18 @@
   color: #fecaca;
 }
 
-.settings-friends-block {
-  margin-bottom: 18px;
-}
-
-.settings-friends-block:last-child {
-  margin-bottom: 0;
-}
-
-.settings-friends-subheading {
-  margin: 0 0 8px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
 .settings-friends-search-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .settings-friends-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
+  min-height: 40px;
+  padding: 0 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg-secondary);
@@ -230,10 +278,48 @@
   font-size: 0.875rem;
 }
 
-.settings-friends-hint {
-  margin: 0 0 8px;
+.settings-friends-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.settings-friends-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-friends-empty {
+  margin: 0 0 10px;
+  padding: 12px 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(148, 163, 184, 0.22);
+  background: rgba(0, 0, 0, 0.12);
   font-size: 0.8125rem;
   color: var(--text-muted);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.settings-friends-card-body--flush .settings-friends-empty {
+  margin: 10px 12px 12px;
+}
+
+.settings-friends-empty:last-child {
+  margin-bottom: 0;
+}
+
+.settings-friends-empty--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-style: solid;
+  border-color: var(--border);
+}
+
+.settings-friends-card-body--flush .settings-friends-empty--loading {
+  margin: 10px 12px 12px;
 }
 
 .settings-friends-error {
@@ -246,42 +332,72 @@
   padding: 0;
 }
 
+.settings-friends-list--inset {
+  padding: 6px;
+}
+
 .settings-friends-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.settings-friends-list-item:last-child {
+  margin-bottom: 0;
+}
+
+.settings-friends-list-item--row {
+  flex-wrap: nowrap;
+}
+
+.settings-friends-list-main {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
-}
-
-.settings-friends-list-item:last-child {
-  border-bottom: none;
-}
-
-.settings-friends-list-item--row {
-  justify-content: space-between;
+  min-width: 0;
+  flex: 1;
 }
 
 .settings-friends-name {
   color: var(--text-primary);
   font-weight: 500;
+  min-width: 0;
+  word-break: break-word;
 }
 
-.settings-friends-tag {
-  font-size: 0.75rem;
+.settings-friends-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
   color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .settings-friends-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  align-items: center;
 }
 
 .settings-friends-btn {
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg-secondary);
@@ -290,6 +406,12 @@
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.settings-friends-btn--search {
+  min-width: 96px;
+  flex-shrink: 0;
 }
 
 .settings-friends-btn:hover:not(:disabled) {
@@ -302,12 +424,28 @@
 }
 
 .settings-friends-btn--small {
-  padding: 6px 10px;
+  min-height: 32px;
+  padding: 0 10px;
   font-size: 0.75rem;
 }
 
 .settings-friends-btn--ghost {
   background: transparent;
+}
+
+@media (max-width: 420px) {
+  .settings-friends-list-item {
+    flex-wrap: wrap;
+  }
+
+  .settings-friends-list-item--row .settings-friends-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .settings-friends-list-item--row > .settings-friends-btn {
+    margin-left: auto;
+  }
 }
 
 .settings-section {
@@ -316,11 +454,6 @@
 
 .settings-section:last-child {
   margin-bottom: 0;
-}
-
-.settings-section-rank .settings-test-hint {
-  margin-top: 0;
-  margin-bottom: 10px;
 }
 
 .settings-section-data {

@@ -368,7 +368,6 @@ function Settings({
       <div className="settings-primary-stack">
         <section className="settings-section settings-section-rank">
           <h2 className="settings-section-title">Rank display</h2>
-          <p className="settings-test-hint">Visual theme only — rank progression and LP are unchanged.</p>
           <label className="settings-test-row">
             <span>Rank visuals</span>
             <select
